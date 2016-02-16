@@ -1,6 +1,6 @@
 
 #==============================================================================
-#  ALGORITHMIQUE
+#  CUSTOM LIBRARIES
 #==============================================================================
 
 from random import random
@@ -22,7 +22,7 @@ class Genetic:
         If once parameter is set to True, the caracteristics from the list
         are only taken once
         """
-        if not (0 <=  length <= (caracteristics)):
+        if not (0 <=  length <= len(caracteristics)):
             raise AttributeError('length is not in range')
 
         c = list(caracteristics)
@@ -142,8 +142,13 @@ class Genetic:
 
         return hybrid
 
+#==============================================================================
+#  ALGORITHMIQUE
+#==============================================================================
 
-class Darwin:
+from math import sqrt
+
+class Darwin(object):
     """
     This class simulate the natural selection process.
 
@@ -152,26 +157,74 @@ class Darwin:
     Third the best individual are determinate
     """
 
-    def  __init__(self, caracteristics, max_time_s = 10):
-        self.ranking = ranking
-        self.caracteristics = caracteristics
-        self.max_time_s = max_time_s
-        self.elit = []
+    def  __init__(self, **kwargs):
+        self.caracteristics = kwargs.get('caracteristics', [])
+        self.max_time_s = kwargs.get('max_time_s', 10)
+        self.max_population =  kwargs.get('max_population', 10)
 
+    def populate(self):
+        """Prototype, please override"""
+        raise Exception("This method is not override !")
 
     def ranking(self, individual):
-        #
-        for i in individual:
-            return 0
+        """Prototype, please override"""
+        raise Exception("This method is not override !")
 
     def evaluate(self):
-        population = {}
+        """Prototype, please override"""
+        raise Exception("This method is not override !")
 
-        #Frist fill a new population
-        for i in range(len(self.caracteristics)):
-            individual = Genetic.create(len(caracteristics), caracteristics, True)
-            ranking = self.ranking(individual)
-            population[individual] = ranking
+
+class DarwinForCities1(Darwin):
+    """
+    Try to find the shortest path to reatch all cities
+
+    Algorithm number 1, other will follows :-)
+    """
+
+    def  __init__(self, **kwargs):
+        Darwin.__init__(self, **kwargs)
+        self.elit = []
+
+    def populate(self):
+        """
+        Population of several path of all cities matched
+        (always pass by all the towns)
+        """
+        self.individuals = []
+        c = self.caracteristics
+        initialRank = 0
+        for i in range(self.max_population):
+            self.individuals.append(Genetic.create(len(c), c, True))
+
+    def ranking(self, path):
+        """
+        Sum of the distance between all the town of the path
+
+        path[0] contains the town list in visit order
+        path[1] contains the rank of this path
+        """
+        dist = 0
+        previous_town = None
+        for town in path:
+            if previous_town == None:
+                previous_town = town
+            else:
+                dist += sqrt(town[1]**2 + town[2]**2)
+
+        path[1] = dist
+        return dist
+
+    def evaluate(self):
+        """
+        TODO make some mutation and try again
+        """
+        self.rank = []
+        for i in self.individuals:
+            self.rank.append(self.ranking(i))
+
+        print "PATH LENGTH : "
+        print self.rank
 
 #==============================================================================
 #  READ FILE
@@ -236,5 +289,9 @@ class GUI:
 
 if __name__ == "__main__":
     listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
+
+    d = DarwinForCities1(caracteristics = listCities)
+    d.populate()
+    d.evaluate()
 
     GUI.showGui(listCities)
