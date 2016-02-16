@@ -1,3 +1,8 @@
+
+#==============================================================================
+#  ALGORITHMIQUE
+#==============================================================================
+
 from random import random
 
 class Genetic:
@@ -138,13 +143,98 @@ class Genetic:
         return hybrid
 
 
-#class CitiesImport:
+class Darwin:
+    """
+    This class simulate the natural selection process.
 
+    First the population are generated
+    Second the individuals are confronted and ranked
+    Third the best individual are determinate
+    """
+
+    def  __init__(self, caracteristics, max_time_s = 10):
+        self.ranking = ranking
+        self.caracteristics = caracteristics
+        self.max_time_s = max_time_s
+        self.elit = []
+
+
+    def ranking(self, individual):
+        #
+        for i in individual:
+            return 0
+
+    def evaluate(self):
+        population = {}
+
+        #Frist fill a new population
+        for i in range(len(self.caracteristics)):
+            individual = Genetic.create(len(caracteristics), caracteristics, True)
+            ranking = self.ranking(individual)
+            population[individual] = ranking
+
+#==============================================================================
+#  READ FILE
+#==============================================================================
+
+class CitiesLoader:
+
+    @staticmethod
+    def getCitiesFromFile(fileName):
+        cities = []
+
+        with open(fileName, 'r') as f:
+            for line in f:
+                word = line.split(' ')
+                city = (word[0], int(word[1]), int(word[2]))
+                cities.append(city)
+
+        return cities
+
+
+#==============================================================================
+#  GUI
+#==============================================================================
+
+import pygame
+from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
+import sys
+
+class GUI:
+
+    @staticmethod
+    def showGui(cities):
+        screen_x = 500
+        screen_y = 500
+
+        city_color = [10,10,200] # blue
+        city_radius = 3
+
+        font_color = [255,255,255] # white
+
+        pygame.init()
+        window = pygame.display.set_mode((screen_x, screen_y))
+        pygame.display.set_caption('Exemple')
+        screen = pygame.display.get_surface()
+        font = pygame.font.Font(None,30)
+
+        screen.fill(0)
+        citiesCoor = [x[1:] for x in cities]
+        pygame.draw.lines(screen,city_color,True,citiesCoor)
+        text = font.render("Un chemin, SURREMENT le meilleur!", True, font_color)
+        textRect = text.get_rect()
+        screen.blit(text, textRect)
+        pygame.display.flip()
+
+        while True:
+        	event = pygame.event.wait()
+        	if event.type == KEYDOWN: break
+
+#==============================================================================
+#  MAIN
+#==============================================================================
 
 if __name__ == "__main__":
-    l1 = [1,2,3,4,5,6,7,8,9]
-    l2 = [11,12,13,14,15,16,17,18,19]
-    l3 = [21,22,23,24,25,26,27,28,29]
+    listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
 
-    import GeneticLib
-    print Genetic.mutation(l1, 0.5)
+    GUI.showGui(listCities)
