@@ -7,95 +7,61 @@ from random import random
 
 class Genetic:
     """
-    This class regroup functions that simulate the genetic comportement
-    that occured in reproduction, but don't care about natural selection
-    (see Darwin class for that).
-
-    the individuals are a list of caracteristics
+    This class regroup functions that simulate the genetic comportement for
+    cities creation
     """
 
     @staticmethod
-    def create(length, caracteristics, once=False):
+    def createPath(length, cities_list, once=True):
         """
-        create a new individual from a list of caracteristics picked randomly
+        create a new path between cities from a list of cities picked randomly
 
-        If once parameter is set to True, the caracteristics from the list
-        are only taken once
+        If once parameter is set to True, the cities from the list only
+        taken once
         """
-        if not (0 <=  length <= len(caracteristics)):
-            raise AttributeError('length is not in range')
+        if not (0 <=  length):
+            if once and length <= len(cities_list):
+                raise AttributeError('length is not in range')
 
-        c = list(caracteristics)
-        individual = []
+        c = list(cities_list)
+        path = []
         for i in range(0, length):
             randomIndex = random() * len(c)
             if once:
-                individual.append(c.pop(int(randomIndex)))
+                path.append(c.pop(int(randomIndex)))
             else:
-                individual.append(c[int(randomIndex)])
+                path.append(c[int(randomIndex)])
 
-        return individual
+        return path
 
     @staticmethod
-    def renovation(individual, caracteristics, chance = 0.2, once=False):
+    def crossPathWithPivot(path1, path2, pivo=0.5):
         """
-        for each caracteristics of individual, there is a small chance to mute
-        in a new one picked randomly in a list of caracteristics.
-
-        The chance can be specify passing a ratio balence between [0,1] like this:
-            [0 ; chance] -> a mutation occured
-            ]chance ; 1] -> no mutation
-
-        If once parameter is set to True, the caracteristics from the list
-        are only taken once
-        """
-        if not (0 <= chance <= 1):
-            raise AttributeError('chance is not in range')
-        if len(caracteristics) < len(individual) and once:
-            raise AttributeError('not enough caracteristics for a once parameter')
-
-        c = list(caracteristics)
-        hybrid = []
-        for i in range(0, len(individual)):
-            if(random() > chance):
-                hybrid.append(individual[i])
-            else:
-                randomIndex = random() * len(c)
-                if once:
-                    hybrid.append(c.pop(int(randomIndex)))
-                else:
-                    hybrid.append(c[int(randomIndex)])
-
-        return hybrid
-
-    @staticmethod
-    def cross(individual1, individual2, pivo=0.5):
-        """
-        create a new individual from 2 parents (individual2 & individual2) with
+        create a new path from 2 parents (path1 & path2) with
         one part of the first parent and one part of the second.
 
         the pivo is the parameter that set the percent taken from the first
         and the second like this:
-            [0 ; pivo] -> from parent 1 (individual1)
-            ]pivo ; 1] -> from parent 2 (individual2)
+            [0 ; pivo] -> from parent 1 (path1)
+            ]pivo ; 1] -> from parent 2 (path2)
 
         the parents must have the same length
         """
-        if len(individual1) != len(individual2):
+        if len(path1) != len(path2):
             raise AttributeError('parents lengths are not the same')
         if not (0 <= pivo <= 1):
             raise AttributeError('pivo is  not in range')
 
         hybrid = []
-        hybrid.extend(individual1[:int(pivo*len(individual1))])
-        hybrid.extend(individual2[int(pivo*len(individual1)):])
+        hybrid.extend(path1[:int(pivo*len(path1))])
+        hybrid.extend(path2[int(pivo*len(path1)):])
 
         return hybrid
 
     @staticmethod
-    def hybridation_chance(individual1, individual2, balance = 0.5):
+    def hybridation(path1, path2, balance = 0.5):
         """
-        create a new individual from 2 parents (individual2 & individual2) with
+        create a new individual from 2 parents (path1 & path2) with
         a random pick from them.
 
         the balance is the ratio from which parents the carateristic will be picked
@@ -105,24 +71,24 @@ class Genetic:
 
         the parents must have the same length
         """
-        if len(individual1) != len(individual2):
+        if len(path1) != len(path2):
             raise AttributeError('parent lengths are not the same')
         if not (0 <= balance <= 1):
             raise AttributeError('balance is  not in range')
 
         hybrid = []
-        for i in range(0, len(individual1)):
+        for i in range(0, len(path1)):
             if(random() > balance):
-                hybrid.append(individual1[i])
+                hybrid.append(path1[i])
             else:
-                hybrid.append(individual2[i])
+                hybrid.append(path2[i])
 
         return hybrid
 
     @staticmethod
-    def mutation(individual, percent = 0.2):
+    def mutation(path, percent = 0.2):
         """
-        from a given individual create a new individual with some caracteristic
+        from a given path create a new path with some caracteristic
         swaped. The percent parameter define how swap mutation will occure.
 
         The percent can be specify passing a ratio between [0,1]
@@ -130,8 +96,8 @@ class Genetic:
         if not (0 <= percent <= 1):
             raise AttributeError('percent is  not in range')
 
-        mutation_count = int(percent * len(individual))
-        hybrid = list(individual)
+        mutation_count = int(percent * len(path))
+        hybrid = list(path)
         for i in range(0, mutation_count):
             randomIndex1 = int(random() * len(hybrid))
             randomIndex2 = int(random() * len(hybrid))
@@ -143,36 +109,44 @@ class Genetic:
         return hybrid
 
 #==============================================================================
-#  ALGORITHMIQUE
+#  CUSTOM CLASSES
 #==============================================================================
 
 from math import sqrt
+import time
 
 class Darwin(object):
     """
-    This class simulate the natural selection process.
-
-    First the population are generated
-    Second the individuals are confronted and ranked
-    Third the best individual are determinate
+    Execute the genetic algorithm in a given time
     """
 
     def  __init__(self, **kwargs):
-        self.caracteristics = kwargs.get('caracteristics', [])
         self.max_time_s = kwargs.get('max_time_s', 10)
-        self.max_population =  kwargs.get('max_population', 10)
 
-    def populate(self):
+    def initialisation(self):
         """Prototype, please override"""
         raise Exception("This method is not override !")
 
-    def ranking(self, individual):
+    def runAlgorithm(self):
         """Prototype, please override"""
         raise Exception("This method is not override !")
 
-    def evaluate(self):
-        """Prototype, please override"""
-        raise Exception("This method is not override !")
+    def run(self):
+        timeout = False
+        bestPath = None
+
+        self.initialisation()
+
+        startTime = time.time()
+        while not timeout:
+            bestPath = self.runAlgorithm()
+
+            endTime = time.time()
+
+            if endTime - startTime > self.max_time_s:
+                timeout = True
+
+        return bestPath
 
 
 class DarwinForCities1(Darwin):
@@ -184,24 +158,35 @@ class DarwinForCities1(Darwin):
 
     def  __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
+        self.cities_list = kwargs.get('cities_list', [])
         self.elit = []
 
-    def populate(self):
+    def initialisation(self):
         """
-        Population of several path of all cities matched
-        (always pass by all the towns)
+        Create a starting pool of random path
         """
-        self.individuals = []
-        c = self.caracteristics
-        initialRank = 0
-        for i in range(self.max_population):
-            self.individuals.append(Genetic.create(len(c), c, True))
+        self.paths_list = []
+        for i in range(len(self.cities_list)):
+            path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            print path
+            self.paths_list.append(path)
+
+    def runAlgorithm(self):
+        """
+        Find the best path with genetic optimisation
+        """
+        #TODO make some mutation and try again
+        self.rank = []
+        for i in self.paths_list:
+            self.rank.append(self.ranking(i))
+
+        return self.paths_list[0]  #TODO return the best
 
     def ranking(self, path):
         """
         Sum of the distance between all the town of the path
 
-        path[0] contains the town list in visit order
+        path[0] contains the town list imn visit order
         path[1] contains the rank of this path
         """
         dist = 0
@@ -215,16 +200,7 @@ class DarwinForCities1(Darwin):
         path[1] = dist
         return dist
 
-    def evaluate(self):
-        """
-        TODO make some mutation and try again
-        """
-        self.rank = []
-        for i in self.individuals:
-            self.rank.append(self.ranking(i))
 
-        print "PATH LENGTH : "
-        print self.rank
 
 #==============================================================================
 #  READ FILE
@@ -290,8 +266,7 @@ class GUI:
 if __name__ == "__main__":
     listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
 
-    d = DarwinForCities1(caracteristics = listCities)
-    d.populate()
-    d.evaluate()
+    d = DarwinForCities1(cities_list = listCities)
+    print d.run()
 
     GUI.showGui(listCities)
