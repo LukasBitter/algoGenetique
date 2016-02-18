@@ -148,6 +148,7 @@ class Darwin(object):
 
         print "algorithm finish in "+str(endTime - startTime)+" s"
         print "the best path lenght found : "+str(bestPath.getRank())
+        print bestPath.path
         return bestPath.path
 
 
@@ -211,7 +212,7 @@ class MyPathRanked(object):
         """
         Sum of the distance between all the town of the path
         """
-        dist = 0
+        dist = 0.0
         previous_town = None
 
         for town in self.path:
@@ -219,6 +220,10 @@ class MyPathRanked(object):
                 previous_town = town
             else:
                 dist += sqrt((town[1]-previous_town[1])**2 + (town[2]-previous_town[2])**2)
+
+        first_town = self.path[0]
+        last_town = self.path[len(self.path)-1]
+        dist += sqrt((last_town[1]-first_town[1])**2 + (last_town[2]-first_town[2])**2)
         self.rank = dist
 
 #==============================================================================
@@ -291,6 +296,5 @@ if __name__ == "__main__":
     #listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
 
     d = DarwinForCities1(cities_list = listCities)
-    listCities = d.run()
 
-    GUI.showGui(listCities)
+    GUI.showGui(d.run())
