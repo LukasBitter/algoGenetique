@@ -216,10 +216,9 @@ class MyPathRanked(object):
         previous_town = None
 
         for town in self.path:
-            if previous_town == None:
-                previous_town = town
-            else:
+            if previous_town != None:
                 dist += sqrt((town[1]-previous_town[1])**2 + (town[2]-previous_town[2])**2)
+            previous_town = town
 
         first_town = self.path[0]
         last_town = self.path[len(self.path)-1]
