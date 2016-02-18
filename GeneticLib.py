@@ -121,7 +121,7 @@ class Darwin(object):
     """
 
     def  __init__(self, **kwargs):
-        self.max_time_s = kwargs.get('max_time_s', 10)
+        self.max_time_s = float(kwargs.get('max_time_s', 10))
 
     def initialisation(self):
         """Prototype, please override"""
@@ -146,6 +146,7 @@ class Darwin(object):
 
             if endTime - startTime > self.max_time_s:
                 timeout = True
+            print timeout
 
         print "algorithm finish in "+str(endTime - startTime)+" s"
         return bestPath
@@ -182,8 +183,6 @@ class DarwinForCities1(Darwin):
             i.ranking()
 
         #self.paths_list.path.sort(key=rank)
-
-
 
         return self.paths_list[0].path  #TODO return the best
 
@@ -290,4 +289,3 @@ if __name__ == "__main__":
 
     go_solve(fileName, gui, maxTime)
 
-    GUI.showGui(listCities)
