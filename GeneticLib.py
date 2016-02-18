@@ -121,7 +121,7 @@ class Darwin(object):
     """
 
     def  __init__(self, **kwargs):
-        self.max_time_s = kwargs.get('max_time_s', 10)
+        self.max_time_s = float(kwargs.get('max_time_s', 10))
 
     def initialisation(self):
         """Prototype, please override"""
@@ -283,6 +283,17 @@ class GUI:
         	event = pygame.event.wait()
         	if event.type == KEYDOWN: break
 
+def go_solve(file=None, gui=True, maxtime=0):
+
+    listCities = CitiesLoader.getCitiesFromFile(file)
+
+    d = DarwinForCities1(cities_list = listCities, max_time_s= maxtime)
+    listCities = d.run()
+
+    GUI.showGui(listCities)
+
+
+
 #==============================================================================
 #  MAIN
 #==============================================================================
@@ -292,9 +303,7 @@ if __name__ == "__main__":
     #prog = open(sys.argv[1]).read()
     #print(prog)
     fileName = sys.argv[1]
-    listCities = CitiesLoader.getCitiesFromFile(fileName)
-    #listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
+    gui = sys.argv[2]
+    maxTime = sys.argv[3]
 
-    d = DarwinForCities1(cities_list = listCities)
-
-    GUI.showGui(d.run())
+    go_solve(fileName, gui, maxTime)
