@@ -259,6 +259,17 @@ class GUI:
         	event = pygame.event.wait()
         	if event.type == KEYDOWN: break
 
+def go_solve(file=None, gui=True, maxtime=0):
+
+    listCities = CitiesLoader.getCitiesFromFile(file)
+
+    d = DarwinForCities1(cities_list = listCities, max_time_s= maxtime)
+    print d.run()
+
+    GUI.showGui(listCities)
+
+
+
 #==============================================================================
 #  MAIN
 #==============================================================================
@@ -268,10 +279,8 @@ if __name__ == "__main__":
     #prog = open(sys.argv[1]).read()
     #print(prog)
     fileName = sys.argv[1]
-    listCities = CitiesLoader.getCitiesFromFile(fileName)
-    #listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
+    gui = sys.argv[2]
+    maxTime = sys.argv[3]
 
-    d = DarwinForCities1(cities_list = listCities)
-    print d.run()
+    go_solve(fileName, gui, maxTime)
 
-    GUI.showGui(listCities)
