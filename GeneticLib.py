@@ -270,7 +270,12 @@ class GUI:
 #==============================================================================
 
 if __name__ == "__main__":
-    listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
+    import sys
+    #prog = open(sys.argv[1]).read()
+    #print(prog)
+    fileName = sys.argv[1]
+    listCities = CitiesLoader.getCitiesFromFile(fileName)
+    #listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
 
     d = DarwinForCities1(cities_list = listCities)
     listCities = d.run()
