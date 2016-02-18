@@ -137,6 +137,7 @@ class Darwin(object):
 
         self.initialisation()
 
+        print "start algorithm for ~"+str(self.max_time_s)+" s"
         startTime = time.time()
         while not timeout:
             bestPath = self.runAlgorithm()
@@ -146,6 +147,7 @@ class Darwin(object):
             if endTime - startTime > self.max_time_s:
                 timeout = True
 
+        print "algorithm finish in "+str(endTime - startTime)+" s"
         return bestPath
 
 
@@ -168,39 +170,43 @@ class DarwinForCities1(Darwin):
         self.paths_list = []
         for i in range(len(self.cities_list)):
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            print path
-            self.paths_list.append(path)
+            self.paths_list.append(MyPathRanked(path))
 
     def runAlgorithm(self):
         """
         Find the best path with genetic optimisation
         """
         #TODO make some mutation and try again
-        self.rank = []
+        self.rank = {}
         for i in self.paths_list:
-            self.rank.append(self.ranking(i))
+            i.ranking()
 
-        return self.paths_list[0]  #TODO return the best
+        #self.paths_list.path.sort(key=rank)
 
-    def ranking(self, path):
+
+
+        return self.paths_list[0].path  #TODO return the best
+
+
+class MyPathRanked(object):
+    def __init__(self, path):
+        self.path = path
+        self.rank = 0
+        self.ranking()
+
+    def ranking(self):
         """
         Sum of the distance between all the town of the path
-
-        path[0] contains the town list imn visit order
-        path[1] contains the rank of this path
         """
         dist = 0
         previous_town = None
-        for town in path:
+
+        for town in self.path:
             if previous_town == None:
                 previous_town = town
             else:
                 dist += sqrt(town[1]**2 + town[2]**2)
-
-        path[1] = dist
-        return dist
-
-
+        self.rank = dist
 
 #==============================================================================
 #  READ FILE
@@ -267,6 +273,6 @@ if __name__ == "__main__":
     listCities = CitiesLoader.getCitiesFromFile("Ressources12/data/pb005.txt")
 
     d = DarwinForCities1(cities_list = listCities)
-    print d.run()
+    listCities = d.run()
 
     GUI.showGui(listCities)
