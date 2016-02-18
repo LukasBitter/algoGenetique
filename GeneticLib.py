@@ -141,15 +141,14 @@ class Darwin(object):
         startTime = time.time()
         while not timeout:
             bestPath = self.runAlgorithm()
-
             endTime = time.time()
 
             if endTime - startTime > self.max_time_s:
                 timeout = True
-            print timeout
 
         print "algorithm finish in "+str(endTime - startTime)+" s"
-        return bestPath
+        print "the best path lenght found : "+str(bestPath.getRank())
+        return bestPath.path
 
 
 class DarwinForCities1(Darwin):
@@ -162,6 +161,7 @@ class DarwinForCities1(Darwin):
     def  __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.cities_list = kwargs.get('cities_list', [])
+        self.percent = kwargs.get('percentKeep', 0.5)
         self.elit = []
 
     def initialisation(self):
@@ -173,18 +173,26 @@ class DarwinForCities1(Darwin):
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(path))
 
+        for i in self.paths_list:
+            i.ranking()
+
     def runAlgorithm(self):
         """
         Find the best path with genetic optimisation
         """
-        #TODO make some mutation and try again
-        self.rank = {}
+        pivot = int(len(self.paths_list)*self.percent)
+        self.paths_list = self.paths_list[:pivot]
+
+        for i in range(len(self.cities_list)-pivot):
+            path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            self.paths_list.append(MyPathRanked(path))
+
         for i in self.paths_list:
             i.ranking()
 
-        #self.paths_list.path.sort(key=rank)
+        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
 
-        return self.paths_list[0].path  #TODO return the best
+        return self.paths_list[0]
 
 
 class MyPathRanked(object):
@@ -192,6 +200,12 @@ class MyPathRanked(object):
         self.path = path
         self.rank = 0
         self.ranking()
+
+    def __repr__(self):
+        return "MyPathRanked : "+str(self.rank)
+
+    def getRank(self):
+        return self.rank
 
     def ranking(self):
         """
@@ -204,7 +218,7 @@ class MyPathRanked(object):
             if previous_town == None:
                 previous_town = town
             else:
-                dist += sqrt(town[1]**2 + town[2]**2)
+                dist += sqrt((town[1]-previous_town[1])**2 + (town[2]-previous_town[2])**2)
         self.rank = dist
 
 #==============================================================================
