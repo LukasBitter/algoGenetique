@@ -210,9 +210,7 @@ class DarwinForCities1(Darwin):
 
 class DarwinForCities2(Darwin):
     """
-    Try to find the shortest path to reatch all cities
-
-    Algorithm number 1, other will follows :-)
+    Try 2 TODO algorithm descrition
     """
 
     def __init__(self, **kwargs):
@@ -236,6 +234,32 @@ class DarwinForCities2(Darwin):
 
         return self.paths_list[0]
 
+
+class DarwinForCities3(Darwin):
+    """
+    Try 3 TODO algorithm descrition
+    """
+
+    def __init__(self, **kwargs):
+        Darwin.__init__(self, **kwargs)
+        self.percent = kwargs.get('percentKeep', 0.3)
+        self.elit = []
+
+    def runAlgorithm(self):
+
+        for i in range(len(self.cities_list)):
+            newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            self.paths_list.append(MyPathRanked(newPath))
+
+        for i in self.paths_list:
+            Genetic.mutation(i.path)
+            i.ranking()
+
+        self.paths_list = self.getValidPathList(self.paths_list)
+        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
+        self.paths_list[:len(self.cities_list)]
+
+        return self.paths_list[0]
 
 
 class MyPathRanked(object):
