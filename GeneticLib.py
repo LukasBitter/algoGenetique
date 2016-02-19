@@ -162,7 +162,7 @@ class DarwinForCities1(Darwin):
     def  __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.cities_list = kwargs.get('cities_list', [])
-        self.percent = kwargs.get('percentKeep', 0.5)
+        self.percent = kwargs.get('percentKeep', 0.3)
         self.elit = []
 
     def initialisation(self):
@@ -189,6 +189,7 @@ class DarwinForCities1(Darwin):
             self.paths_list.append(MyPathRanked(path))
 
         for i in self.paths_list:
+            Genetic.mutation(i.path)
             i.ranking()
 
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
@@ -207,6 +208,9 @@ class MyPathRanked(object):
 
     def getRank(self):
         return self.rank
+
+    def __len__(self):
+        return len(self.path)
 
     def ranking(self):
         """
