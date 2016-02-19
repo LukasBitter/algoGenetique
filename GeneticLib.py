@@ -222,13 +222,10 @@ class DarwinForCities1(Darwin):
             i.ranking()
 
         self.paths_list = self.getValidPathList(self.paths_list)
-
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
-
-
+        self.paths_list[:len(self.cities_list)]
 
         return self.paths_list[0]
-
 
     def getValidPathList(self, paths_list):
         new_path_list = []
