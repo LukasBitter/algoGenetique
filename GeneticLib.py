@@ -133,6 +133,10 @@ class Darwin(object):
         """Prototype, please override"""
         raise Exception("This method is not override !")
 
+    def runAlgorithmCross(self):
+        """Prototype, please override"""
+        raise Exception("This method is not override !")
+
     def run(self):
         timeout = False
         bestPath = None
@@ -141,12 +145,23 @@ class Darwin(object):
 
         print "start algorithm for ~" + str(self.max_time_s) + " s"
         startTime = time.time()
+
+        logList = []
+
         while not timeout:
-            bestPath = self.runAlgorithm()
+            bestPath = self.runAlgorithmCross()
             endTime = time.time()
+            logList.append(self.paths_list)
 
             if endTime - startTime > self.max_time_s:
                 timeout = True
+
+        with open('log.txt', 'w') as f:
+            for list_path in logList:
+                f.write('\n')
+                for path in list_path:
+                    f.writelines(path.path.__repr__())
+
 
         print "algorithm finish in " + str(endTime - startTime) + " s"
         print "the best path lenght found : " + str(bestPath.getRank())
@@ -217,13 +232,19 @@ class DarwinForCities1(Darwin):
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(newPath))
 
+        prev = None
         for i in self.paths_list:
             Genetic.mutation(i.path)
+            if(prev != None):
+                Genetic.crossPathWithPivot(prev.path, i.path, 0.5)
             i.ranking()
+            previ = i
 
         self.paths_list = self.getValidPathList(self.paths_list)
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
         self.paths_list[:len(self.cities_list)]
+
+
 
         return self.paths_list[0]
 
