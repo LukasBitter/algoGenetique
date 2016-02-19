@@ -143,10 +143,6 @@ class Darwin(object):
         """Prototype, please override"""
         raise Exception("This method is not override !")
 
-    def runAlgorithmCross(self):
-        """Prototype, please override"""
-        raise Exception("This method is not override !")
-
     def run(self):
         timeout = False
         bestPath = None
@@ -159,7 +155,7 @@ class Darwin(object):
         logList = []
 
         while not timeout:
-            bestPath = self.runAlgorithmCross()
+            bestPath = self.runAlgorithm()
             endTime = time.time()
             logList.append(self.paths_list)
 
