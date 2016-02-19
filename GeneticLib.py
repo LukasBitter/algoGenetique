@@ -124,10 +124,20 @@ class Darwin(object):
 
     def __init__(self, **kwargs):
         self.max_time_s = float(kwargs.get('max_time_s', 10))
+        self.cities_list = kwargs.get('cities_list', [])
 
     def initialisation(self):
-        """Prototype, please override"""
-        raise Exception("This method is not override !")
+        """
+        Create a starting pool of random path
+        """
+        self.paths_list = []
+        for i in range(len(self.cities_list)):
+            path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            self.paths_list.append(MyPathRanked(path))
+
+        for i in self.paths_list:
+            i.ranking()
+
 
     def runAlgorithm(self):
         """Prototype, please override"""
@@ -168,46 +178,33 @@ class Darwin(object):
         print bestPath.path
         return bestPath.path
 
-        #
-        # def getValidPathList(self,paths_list):
-        #     """Prototype, please override"""
-        #     raise Exception("This method is not override !")
-        #
-        # def isValid(self,path):
-        #     """Prototype, please override"""
-        #     raise Exception("This method is not override !")
-        #
+    def getValidPathList(self, paths_list):
+        new_path_list = []
+        for rankedPath in (paths_list):
+            if self.isValid(rankedPath):
+                new_path_list.append(rankedPath);
+        return new_path_list
+
+    def isValid(self, rankedPath):
+        for city in self.cities_list:
+            #print city
+            #print rankedPath
+            if city not in rankedPath.path:
+                return False
+        return True
 
 
 class DarwinForCities1(Darwin):
     """
     Try to find the shortest path to reatch all cities
-
-    Algorithm number 1, other will follows :-)
+    Algorithm number 1 very trivial, other will follows :-)
     """
 
     def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
-        self.cities_list = kwargs.get('cities_list', [])
         self.percent = kwargs.get('percentKeep', 0.3)
-        self.elit = []
-
-    def initialisation(self):
-        """
-        Create a starting pool of random path
-        """
-        self.paths_list = []
-        for i in range(len(self.cities_list)):
-            path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            self.paths_list.append(MyPathRanked(path))
-
-        for i in self.paths_list:
-            i.ranking()
 
     def runAlgorithm(self):
-        """
-        Find the best path with genetic optimisation
-        """
         pivot = int(len(self.paths_list) * self.percent)
         self.paths_list = self.paths_list[:pivot]
 
@@ -226,7 +223,19 @@ class DarwinForCities1(Darwin):
 
         return self.paths_list[0]
 
-    def runAlgorithmCross(self):
+class DarwinForCities2(Darwin):
+    """
+    Try to find the shortest path to reatch all cities
+
+    Algorithm number 1, other will follows :-)
+    """
+
+    def __init__(self, **kwargs):
+        Darwin.__init__(self, **kwargs)
+        self.percent = kwargs.get('percentKeep', 0.3)
+        self.elit = []
+
+    def runAlgorithm(self):
 
         for i in range(len(self.cities_list)):
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
@@ -248,20 +257,6 @@ class DarwinForCities1(Darwin):
 
         return self.paths_list[0]
 
-    def getValidPathList(self, paths_list):
-        new_path_list = []
-        for rankedPath in (paths_list):
-            if self.isValid(rankedPath):
-                new_path_list.append(rankedPath);
-        return new_path_list
-
-    def isValid(self, rankedPath):
-        for city in self.cities_list:
-            #print city
-            #print rankedPath
-            if city not in rankedPath.path:
-                return False
-        return True
 
 
 class MyPathRanked(object):
