@@ -1,9 +1,9 @@
-
-#==============================================================================
+# ==============================================================================
 #  CUSTOM LIBRARIES
-#==============================================================================
+# ==============================================================================
 
 from random import random
+
 
 class Genetic:
     """
@@ -19,7 +19,7 @@ class Genetic:
         If once parameter is set to True, the cities from the list only
         taken once
         """
-        if not (0 <=  length):
+        if not (0 <= length):
             if once and length <= len(cities_list):
                 raise AttributeError('length is not in range')
 
@@ -53,13 +53,13 @@ class Genetic:
             raise AttributeError('pivo is  not in range')
 
         hybrid = []
-        hybrid.extend(path1[:int(pivo*len(path1))])
-        hybrid.extend(path2[int(pivo*len(path1)):])
+        hybrid.extend(path1[:int(pivo * len(path1))])
+        hybrid.extend(path2[int(pivo * len(path1)):])
 
         return hybrid
 
     @staticmethod
-    def hybridation(path1, path2, balance = 0.5):
+    def hybridation(path1, path2, balance=0.5):
         """
         create a new individual from 2 parents (path1 & path2) with
         a random pick from them.
@@ -78,7 +78,7 @@ class Genetic:
 
         hybrid = []
         for i in range(0, len(path1)):
-            if(random() > balance):
+            if (random() > balance):
                 hybrid.append(path1[i])
             else:
                 hybrid.append(path2[i])
@@ -86,7 +86,7 @@ class Genetic:
         return hybrid
 
     @staticmethod
-    def mutation(path, percent = 0.2):
+    def mutation(path, percent=0.5):
         """
         from a given path create a new path with some caracteristic
         swaped. The percent parameter define how swap mutation will occure.
@@ -108,19 +108,21 @@ class Genetic:
 
         return hybrid
 
-#==============================================================================
+
+# ==============================================================================
 #  CUSTOM CLASSES
-#==============================================================================
+# ==============================================================================
 
 from math import sqrt
 import time
+
 
 class Darwin(object):
     """
     Execute the genetic algorithm in a given time
     """
 
-    def  __init__(self, **kwargs):
+    def __init__(self, **kwargs):
         self.max_time_s = float(kwargs.get('max_time_s', 10))
 
     def initialisation(self):
@@ -137,7 +139,7 @@ class Darwin(object):
 
         self.initialisation()
 
-        print "start algorithm for ~"+str(self.max_time_s)+" s"
+        print "start algorithm for ~" + str(self.max_time_s) + " s"
         startTime = time.time()
         while not timeout:
             bestPath = self.runAlgorithm()
@@ -146,10 +148,20 @@ class Darwin(object):
             if endTime - startTime > self.max_time_s:
                 timeout = True
 
-        print "algorithm finish in "+str(endTime - startTime)+" s"
-        print "the best path lenght found : "+str(bestPath.getRank())
+        print "algorithm finish in " + str(endTime - startTime) + " s"
+        print "the best path lenght found : " + str(bestPath.getRank())
         print bestPath.path
         return bestPath.path
+
+        #
+        # def getValidPathList(self,paths_list):
+        #     """Prototype, please override"""
+        #     raise Exception("This method is not override !")
+        #
+        # def isValid(self,path):
+        #     """Prototype, please override"""
+        #     raise Exception("This method is not override !")
+        #
 
 
 class DarwinForCities1(Darwin):
@@ -159,7 +171,7 @@ class DarwinForCities1(Darwin):
     Algorithm number 1, other will follows :-)
     """
 
-    def  __init__(self, **kwargs):
+    def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.cities_list = kwargs.get('cities_list', [])
         self.percent = kwargs.get('percentKeep', 0.3)
@@ -181,20 +193,57 @@ class DarwinForCities1(Darwin):
         """
         Find the best path with genetic optimisation
         """
-        pivot = int(len(self.paths_list)*self.percent)
+        pivot = int(len(self.paths_list) * self.percent)
         self.paths_list = self.paths_list[:pivot]
 
-        for i in range(len(self.cities_list)-pivot):
+        for i in range(len(self.cities_list) - pivot):
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(path))
+
+        prev_path = None
+        for i in self.paths_list:
+            Genetic.mutation(i.path)
+            i.ranking()
+
+        self.paths_list = self.getValidPathList(self.paths_list)
+
+        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
+
+        return self.paths_list[0]
+
+    def runAlgorithmCross(self):
+
+        for i in range(len(self.cities_list)):
+            newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            self.paths_list.append(MyPathRanked(newPath))
 
         for i in self.paths_list:
             Genetic.mutation(i.path)
             i.ranking()
 
+        self.paths_list = self.getValidPathList(self.paths_list)
+
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
 
+
+
         return self.paths_list[0]
+
+
+    def getValidPathList(self, paths_list):
+        new_path_list = []
+        for rankedPath in (paths_list):
+            if self.isValid(rankedPath):
+                new_path_list.append(rankedPath);
+        return new_path_list
+
+    def isValid(self, rankedPath):
+        for city in self.cities_list:
+            #print city
+            #print rankedPath
+            if city not in rankedPath.path:
+                return False
+        return True
 
 
 class MyPathRanked(object):
@@ -204,7 +253,7 @@ class MyPathRanked(object):
         self.ranking()
 
     def __repr__(self):
-        return "MyPathRanked : "+str(self.rank)
+        return "MyPathRanked : " + str(self.rank)
 
     def getRank(self):
         return self.rank
@@ -221,20 +270,20 @@ class MyPathRanked(object):
 
         for town in self.path:
             if previous_town != None:
-                dist += sqrt((town[1]-previous_town[1])**2 + (town[2]-previous_town[2])**2)
+                dist += sqrt((town[1] - previous_town[1]) ** 2 + (town[2] - previous_town[2]) ** 2)
             previous_town = town
 
         first_town = self.path[0]
-        last_town = self.path[len(self.path)-1]
-        dist += sqrt((last_town[1]-first_town[1])**2 + (last_town[2]-first_town[2])**2)
+        last_town = self.path[len(self.path) - 1]
+        dist += sqrt((last_town[1] - first_town[1]) ** 2 + (last_town[2] - first_town[2]) ** 2)
         self.rank = dist
 
-#==============================================================================
+
+# ==============================================================================
 #  READ FILE
-#==============================================================================
+# ==============================================================================
 
 class CitiesLoader:
-
     @staticmethod
     def getCitiesFromFile(fileName):
         cities = []
@@ -247,63 +296,66 @@ class CitiesLoader:
 
         return cities
 
-#==============================================================================
+
+# ==============================================================================
 #  GUI
-#==============================================================================
+# ==============================================================================
 
 import pygame
 from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
 import sys
 
-class GUI:
 
+class GUI:
     @staticmethod
     def showGui(cities):
         screen_x = 500
         screen_y = 500
 
-        city_color = [10,10,200] # blue
+        city_color = [10, 10, 200]  # blue
         city_radius = 3
 
-        font_color = [255,255,255] # white
+        font_color = [255, 255, 255]  # white
 
         pygame.init()
         window = pygame.display.set_mode((screen_x, screen_y))
         pygame.display.set_caption('Exemple')
         screen = pygame.display.get_surface()
-        font = pygame.font.Font(None,30)
+        font = pygame.font.Font(None, 30)
 
         screen.fill(0)
         citiesCoor = [x[1:] for x in cities]
-        pygame.draw.lines(screen,city_color,True,citiesCoor)
+        pygame.draw.lines(screen, city_color, True, citiesCoor)
         text = font.render("Un chemin, SURREMENT le meilleur!", True, font_color)
         textRect = text.get_rect()
         screen.blit(text, textRect)
         pygame.display.flip()
 
         while True:
-        	event = pygame.event.wait()
-        	if event.type == KEYDOWN: break
+            event = pygame.event.wait()
+            if event.type == KEYDOWN: break
+
 
 def go_solve(file=None, gui=True, maxtime=0):
-
     listCities = CitiesLoader.getCitiesFromFile(file)
 
-    d = DarwinForCities1(cities_list = listCities, max_time_s= maxtime)
+    d = DarwinForCities1(cities_list=listCities, max_time_s=maxtime)
+
+
     listCities = d.run()
 
     GUI.showGui(listCities)
 
 
-
-#==============================================================================
+# ==============================================================================
 #  MAIN
-#==============================================================================
+# ==============================================================================
 
 if __name__ == "__main__":
     import sys
-    #prog = open(sys.argv[1]).read()
-    #print(prog)
+
+    # prog = open(sys.argv[1]).read()
+    # print(prog)
     fileName = sys.argv[1]
     gui = sys.argv[2]
     maxTime = sys.argv[3]
