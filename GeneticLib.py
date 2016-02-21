@@ -53,8 +53,12 @@ class Genetic:
             raise AttributeError('pivo is  not in range')
 
         hybrid = []
+        # print("Cross: Path1 = ", path1)
+        # print("Cross: Path2 = ", path2)
         hybrid.extend(path1[:int(pivo * len(path1))])
         hybrid.extend(path2[int(pivo * len(path1)):])
+
+        # print("Cross: hybrid = ", hybrid)
 
         return hybrid
 
@@ -125,19 +129,23 @@ class Darwin(object):
     def __init__(self, **kwargs):
         self.max_time_s = float(kwargs.get('max_time_s', 10))
         self.cities_list = kwargs.get('cities_list', [])
+        self.pop_number =  kwargs.get('pop_number', 10)
 
     def initialisation(self):
         """
         Create a starting pool of random path
         """
         self.paths_list = []
-        for i in range(len(self.cities_list)):
+        for i in range(self.pop_number):
+            # print("init pop_number: ", i)
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            # print("path: ", path)
             self.paths_list.append(MyPathRanked(path))
+            # print("path_list size: ", len(self.paths_list))
 
         for i in self.paths_list:
             i.ranking()
-
+            # print("Path ", i)
 
     def runAlgorithm(self):
         """Prototype, please override"""
@@ -153,20 +161,29 @@ class Darwin(object):
         startTime = time.time()
 
         logList = []
+        count = 0
 
         while not timeout:
+            count += 1
+            # print("while counts ", count)
             bestPath = self.runAlgorithm()
             endTime = time.time()
+            # print("paths_list len before append: ", len(self.paths_list))
+            # print(self.paths_list)
             logList.append(self.paths_list)
+            # print("loglist count: ", len(logList[count-1]))
 
-            if endTime - startTime > self.max_time_s:
+            if (endTime - startTime > self.max_time_s or count > 3):
                 timeout = True
 
         with open('log.txt', 'w') as f:
             for list_path in logList:
-                f.write('\n')
+                f.write('************************ ' + str(len(list_path)) + '\n')
+                count_path = 0
                 for path in list_path:
-                    f.writelines(path.path.__repr__())
+                    count_path +=1
+                    f.write("Path " + str(count_path) + " / " + str(path.rank) + ": " + path.path.__repr__())
+                    f.write('\n')
 
 
         print "algorithm finish in " + str(endTime - startTime) + " s"
@@ -186,6 +203,7 @@ class Darwin(object):
             #print city
             #print rankedPath
             if city not in rankedPath.path:
+                # print("One invalid path deleted")
                 return False
         return True
 
@@ -231,23 +249,31 @@ class DarwinForCities2(Darwin):
 
     def runAlgorithm(self):
 
-        for i in range(len(self.cities_list)):
+        # print("path before double: paths_list size= ", len(self.paths_list))
+        for i in range(len(self.paths_list)):
+            #print("path before double: ", i.path)
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(newPath))
 
+        # print("path doubled!")
+
         prev = None
         for i in self.paths_list:
-            Genetic.mutation(i.path)
+            i.path = Genetic.mutation(i.path, 0.2)
             if(prev != None):
-                Genetic.crossPathWithPivot(prev.path, i.path, 0.5)
-            i.ranking()
-            previ = i
+                i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.2)
+                prev.path = Genetic.crossPathWithPivot(prev.path, i.path, 0.2)
+                i.ranking()
+                prev.ranking()
+                prev = None
+            else:
+                prev = i
 
         self.paths_list = self.getValidPathList(self.paths_list)
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
-        self.paths_list[:len(self.cities_list)]
+        self.paths_list = self.paths_list[:len(self.cities_list)]
 
-
+        # print("path_list after reduce: ", len(self.paths_list))
 
         return self.paths_list[0]
 
@@ -283,7 +309,7 @@ class MyPathRanked(object):
     def __init__(self, path):
         self.path = path
         self.rank = 0
-        self.ranking()
+        #self.ranking()  // si on laisse ca, il y a un 10 appels de ranking() a chaque ajout de path a path_list
 
     def __repr__(self):
         return "MyPathRanked : " + str(self.rank)
@@ -304,6 +330,7 @@ class MyPathRanked(object):
         for town in self.path:
             if previous_town != None:
                 dist += sqrt((town[1] - previous_town[1]) ** 2 + (town[2] - previous_town[2]) ** 2)
+                #print("previous_town != None")
             previous_town = town
 
         first_town = self.path[0]
@@ -372,7 +399,7 @@ class GUI:
 def go_solve(file=None, gui=True, maxtime=0):
     listCities = CitiesLoader.getCitiesFromFile(file)
 
-    d = DarwinForCities1(cities_list=listCities, max_time_s=maxtime)
+    d = DarwinForCities2(cities_list=listCities, max_time_s=maxtime)
 
 
     listCities = d.run()
