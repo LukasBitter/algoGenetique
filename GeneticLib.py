@@ -53,6 +53,7 @@ class Genetic:
             raise AttributeError('pivo is  not in range')
 
         hybrid = []
+        # print("******************")
         # print("Cross: Path1 = ", path1)
         # print("Cross: Path2 = ", path2)
         hybrid.extend(path1[:int(pivo * len(path1))])
@@ -207,6 +208,14 @@ class Darwin(object):
                 return False
         return True
 
+    def printPathList(self):
+        count = 0
+        for idx, path in enumerate(self.paths_list):
+            print idx, ")  ",
+            for j in path.path:
+                print j[0],
+            print ": ", path.rank
+
 
 class DarwinForCities1(Darwin):
     """
@@ -249,33 +258,61 @@ class DarwinForCities2(Darwin):
 
     def runAlgorithm(self):
 
+
+        print("*********************************")
+        print("Paths_list after start runAlgo: ", len(self.paths_list))
+        self.printPathList()
+
         # print("path before double: paths_list size= ", len(self.paths_list))
         for i in range(len(self.paths_list)):
             #print("path before double: ", i.path)
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(newPath))
 
+
+        for i in self.paths_list:
+            i.ranking()
+
         # print("path doubled!")
+
+        print("*********************************")
+        print("Paths_list after double: ", len(self.paths_list))
+        self.printPathList()
 
         prev = None
         for i in self.paths_list:
-            i.path = Genetic.mutation(i.path, 0.2)
-            if(prev != None):
-                i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.2)
-                prev.path = Genetic.crossPathWithPivot(prev.path, i.path, 0.2)
+            i.path = Genetic.mutation(i.path, 0.5)
+            i.ranking
+            '''if(prev != None):
+                temp = i
+                i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.5)
+                prev.path = Genetic.crossPathWithPivot(prev.path, temp.path, 0.5)
                 i.ranking()
                 prev.ranking()
                 prev = None
             else:
-                prev = i
+                prev = i'''
 
+        print("*********************************")
+        print("Paths_list after genetic mutation: ", len(self.paths_list))
+        self.printPathList()
         self.paths_list = self.getValidPathList(self.paths_list)
+        print("*********************************")
+        print("Paths_list after delete unvalid: ", len(self.paths_list))
+        self.printPathList()
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
+        print("*********************************")
+        print("Paths_list after sort: ", len(self.paths_list))
+        self.printPathList()
         self.paths_list = self.paths_list[:len(self.cities_list)]
+        print("*********************************")
+        print("Paths_list after keep numer pop: ", len(self.paths_list))
+        self.printPathList()
 
         # print("path_list after reduce: ", len(self.paths_list))
 
         return self.paths_list[0]
+
 
 
 class DarwinForCities3(Darwin):
