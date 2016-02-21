@@ -275,7 +275,7 @@ class DarwinForCities2(Darwin):
 
         prev = None
         for i in self.paths_list:
-            i.path = Genetic.mutation(i.path, 0.2)
+            i.path = Genetic.mutation(i.path, 0.4)
             i.ranking()
             '''if(prev != None):
                 temp = i
