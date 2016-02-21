@@ -1,7 +1,7 @@
 # ==============================================================================
 #  CUSTOM LIBRARIES
 # ==============================================================================
-
+import copy
 from random import random
 
 
@@ -154,7 +154,6 @@ class Darwin(object):
 
     def run(self):
         timeout = False
-        bestPath = None
 
         self.initialisation()
 
@@ -163,18 +162,20 @@ class Darwin(object):
 
         logList = []
         count = 0
+        bestPath = self.runAlgorithm()
 
         while not timeout:
             count += 1
             # print("while counts ", count)
-            bestPath = self.runAlgorithm()
+            newBestPath = self.runAlgorithm()
+            bestPath = (bestPath, newBestPath)[newBestPath.getRank() < bestPath.getRank()]
             endTime = time.time()
             # print("paths_list len before append: ", len(self.paths_list))
             # print(self.paths_list)
             logList.append(self.paths_list)
             # print("loglist count: ", len(logList[count-1]))
 
-            if (endTime - startTime > self.max_time_s or count > 3):
+            if (endTime - startTime > self.max_time_s):# or count > 3):
                 timeout = True
 
         with open('log.txt', 'w') as f:
@@ -185,7 +186,6 @@ class Darwin(object):
                     count_path +=1
                     f.write("Path " + str(count_path) + " / " + str(path.rank) + ": " + path.path.__repr__())
                     f.write('\n')
-
 
         print "algorithm finish in " + str(endTime - startTime) + " s"
         print "the best path lenght found : " + str(bestPath.getRank())
@@ -208,9 +208,10 @@ class Darwin(object):
                 return False
         return True
 
-    def printPathList(self):
+    def printPathList(self, msg, pathList):
         count = 0
-        for idx, path in enumerate(self.paths_list):
+        print(msg)
+        for idx, path in enumerate(pathList):
             print idx, ")  ",
             for j in path.path:
                 print j[0],
@@ -258,31 +259,24 @@ class DarwinForCities2(Darwin):
 
     def runAlgorithm(self):
 
+        # print '***********************************'
+        # print '**********  RUN ALGO  *************'
+        # print '***********************************'
 
-        print("*********************************")
-        print("Paths_list after start runAlgo: ", len(self.paths_list))
-        self.printPathList()
+        # if self.elit:
+            # self.printPathList("Elites before double: ", self.elit)
 
-        # print("path before double: paths_list size= ", len(self.paths_list))
         for i in range(len(self.paths_list)):
-            #print("path before double: ", i.path)
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(newPath))
 
-
-        for i in self.paths_list:
-            i.ranking()
-
-        # print("path doubled!")
-
-        print("*********************************")
-        print("Paths_list after double: ", len(self.paths_list))
-        self.printPathList()
+        # if self.elit:
+            # self.printPathList("Elites after double: ", self.elit)
 
         prev = None
         for i in self.paths_list:
-            i.path = Genetic.mutation(i.path, 0.5)
-            i.ranking
+            i.path = Genetic.mutation(i.path, 0.2)
+            i.ranking()
             '''if(prev != None):
                 temp = i
                 i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.5)
@@ -293,27 +287,24 @@ class DarwinForCities2(Darwin):
             else:
                 prev = i'''
 
-        print("*********************************")
-        print("Paths_list after genetic mutation: ", len(self.paths_list))
-        self.printPathList()
-        self.paths_list = self.getValidPathList(self.paths_list)
-        print("*********************************")
-        print("Paths_list after delete unvalid: ", len(self.paths_list))
-        self.printPathList()
-        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
-        print("*********************************")
-        print("Paths_list after sort: ", len(self.paths_list))
-        self.printPathList()
-        self.paths_list = self.paths_list[:len(self.cities_list)]
-        print("*********************************")
-        print("Paths_list after keep numer pop: ", len(self.paths_list))
-        self.printPathList()
+        # if self.elit:
+            # self.printPathList("Elites after mutation: ", self.elit)
 
-        # print("path_list after reduce: ", len(self.paths_list))
+        # self.printPathList("Paths_list after genetic mutation: " + str(len(self.paths_list)), self.paths_list)
+        self.paths_list = self.getValidPathList(self.paths_list)
+        # self.printPathList("Paths_list after delete unvalid: " + str(len(self.paths_list)), self.paths_list)
+        if self.elit:
+            # self.printPathList("Elites: ", self.elit)
+            self.paths_list.extend((self.elit[0], self.elit[1]))
+            # self.printPathList("List with elites: ", self.paths_list)
+        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
+        # self.printPathList("Paths_list after sort: " + str(len(self.paths_list)), self.paths_list)
+        self.paths_list = self.paths_list[:len(self.cities_list)]
+        # self.printPathList("Paths_list after keep numer pop: " + str(len(self.paths_list)), self.paths_list)
+        self.elit = copy.deepcopy(self.paths_list[:2])
+        # self.printPathList("New elites: ", self.elit)
 
         return self.paths_list[0]
-
-
 
 class DarwinForCities3(Darwin):
     """
