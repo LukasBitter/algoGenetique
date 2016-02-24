@@ -316,7 +316,8 @@ class DarwinForCities3(Darwin):
     def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.percent = kwargs.get('percentKeep', 0.3)
-        self.listTownSize = kwargs.get('listTownSize', 10)
+        self.listTownSize = kwargs.get('listTownSize', 20)
+        self.listElitSize = kwargs.get('listElitSize', 2)
         self.elit = []
 
     def runAlgorithm(self):
@@ -332,10 +333,10 @@ class DarwinForCities3(Darwin):
 
         self.paths_list = self.getValidPathList(self.paths_list)
         if self.elit:
-            self.paths_list.extend((self.elit[0], self.elit[1]))
+            self.paths_list.extend((self.elit))
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
         self.paths_list = self.paths_list[:self.listTownSize]
-        self.elit = copy.deepcopy(self.paths_list[:2])
+        self.elit = copy.deepcopy(self.paths_list[:self.listElitSize])
 
         return self.paths_list[0]
 
