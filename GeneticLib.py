@@ -2,6 +2,7 @@
 #  CUSTOM LIBRARIES
 # ==============================================================================
 import copy
+import cProfile
 from random import random
 
 
@@ -25,12 +26,12 @@ class Genetic:
 
         c = list(cities_list)
         path = []
-        for i in range(0, length):
+        for i in xrange(0, length):
             randomIndex = random() * len(c)
             if once:
-                path.append(c.pop(int(randomIndex)))
+                path.extend([c.pop(int(randomIndex))])
             else:
-                path.append(c[int(randomIndex)])
+                path.extend([c[int(randomIndex)]])
 
         return path
 
@@ -82,11 +83,11 @@ class Genetic:
             raise AttributeError('balance is  not in range')
 
         hybrid = []
-        for i in range(0, len(path1)):
+        for i in xrange(0, len(path1)):
             if (random() > balance):
-                hybrid.append(path1[i])
+                hybrid.extend([path1[i]])
             else:
-                hybrid.append(path2[i])
+                hybrid.extend([path2[i]])
 
         return hybrid
 
@@ -103,7 +104,7 @@ class Genetic:
 
         mutation_count = int(percent * len(path))
         hybrid = list(path)
-        for i in range(0, mutation_count):
+        for i in xrange(0, mutation_count):
             randomIndex1 = int(random() * len(hybrid))
             randomIndex2 = int(random() * len(hybrid))
             tmp1 = hybrid[randomIndex1]
@@ -137,11 +138,11 @@ class Darwin(object):
         Create a starting pool of random path
         """
         self.paths_list = []
-        for i in range(self.pop_number):
+        for i in xrange(self.pop_number):
             # print("init pop_number: ", i)
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             # print("path: ", path)
-            self.paths_list.append(MyPathRanked(path))
+            self.paths_list.extend([MyPathRanked(path)])
             # print("path_list size: ", len(self.paths_list))
 
         for i in self.paths_list:
@@ -172,7 +173,7 @@ class Darwin(object):
             endTime = time.time()
             # print("paths_list len before append: ", len(self.paths_list))
             # print(self.paths_list)
-            logList.append(self.paths_list)
+            logList.extend([self.paths_list])
             # print("loglist count: ", len(logList[count-1]))
 
             if (endTime - startTime > self.max_time_s):# or count > 3):
@@ -187,6 +188,7 @@ class Darwin(object):
                     f.write("Path " + str(count_path) + " / " + str(path.rank) + ": " + path.path.__repr__())
                     f.write('\n')
 
+        print "runs count: ", count
         print "algorithm finish in " + str(endTime - startTime) + " s"
         print "the best path lenght found : " + str(bestPath.getRank())
         print bestPath.path
@@ -196,7 +198,7 @@ class Darwin(object):
         new_path_list = []
         for rankedPath in (paths_list):
             if self.isValid(rankedPath):
-                new_path_list.append(rankedPath);
+                new_path_list.extend([rankedPath]);
         return new_path_list
 
     def isValid(self, rankedPath):
@@ -232,7 +234,7 @@ class DarwinForCities1(Darwin):
         pivot = int(len(self.paths_list) * self.percent)
         self.paths_list = self.paths_list[:pivot]
 
-        for i in range(len(self.cities_list) - pivot):
+        for i in xrange(len(self.cities_list) - pivot):
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.append(MyPathRanked(path))
 
@@ -266,9 +268,9 @@ class DarwinForCities2(Darwin):
         # if self.elit:
             # self.printPathList("Elites before double: ", self.elit)
 
-        for i in range(len(self.paths_list)):
+        for i in xrange(len(self.paths_list)):
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            self.paths_list.append(MyPathRanked(newPath))
+            self.paths_list.extend([MyPathRanked(newPath)])
 
         # if self.elit:
             # self.printPathList("Elites after double: ", self.elit)
@@ -286,7 +288,6 @@ class DarwinForCities2(Darwin):
                 prev = None
             else:
                 prev = i'''
-
         # if self.elit:
             # self.printPathList("Elites after mutation: ", self.elit)
 
@@ -318,9 +319,9 @@ class DarwinForCities3(Darwin):
 
     def runAlgorithm(self):
 
-        for i in range(len(self.cities_list)):
+        for i in xrange(len(self.cities_list)):
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            self.paths_list.append(MyPathRanked(newPath))
+            self.paths_list.extend([MyPathRanked(newPath)])
 
         for i in self.paths_list:
             Genetic.mutation(i.path)
@@ -380,7 +381,7 @@ class CitiesLoader:
             for line in f:
                 word = line.split(' ')
                 city = (word[0], int(word[1]), int(word[2]))
-                cities.append(city)
+                cities.extend([city])
 
         return cities
 
