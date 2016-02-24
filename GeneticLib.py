@@ -307,29 +307,35 @@ class DarwinForCities2(Darwin):
 
         return self.paths_list[0]
 
+
 class DarwinForCities3(Darwin):
     """
-    Try 3 TODO algorithm descrition
+    Try 2 TODO algorithm descrition
     """
 
     def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.percent = kwargs.get('percentKeep', 0.3)
+        self.listTownSize = kwargs.get('listTownSize', 10)
         self.elit = []
 
     def runAlgorithm(self):
 
-        for i in xrange(len(self.cities_list)):
+        for i in xrange(self.listTownSize):
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
             self.paths_list.extend([MyPathRanked(newPath)])
 
+        prev = None
         for i in self.paths_list:
-            Genetic.mutation(i.path)
+            i.path = Genetic.mutation(i.path, 0.4)
             i.ranking()
 
         self.paths_list = self.getValidPathList(self.paths_list)
+        if self.elit:
+            self.paths_list.extend((self.elit[0], self.elit[1]))
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
-        self.paths_list[:len(self.cities_list)]
+        self.paths_list = self.paths_list[:self.listTownSize]
+        self.elit = copy.deepcopy(self.paths_list[:2])
 
         return self.paths_list[0]
 
@@ -428,7 +434,7 @@ class GUI:
 def go_solve(file=None, gui=True, maxtime=0):
     listCities = CitiesLoader.getCitiesFromFile(file)
 
-    d = DarwinForCities2(cities_list=listCities, max_time_s=maxtime)
+    d = DarwinForCities3(cities_list=listCities, max_time_s=maxtime)
 
 
     listCities = d.run()
