@@ -101,18 +101,22 @@ class Genetic:
         if not (0 <= percent <= 1):
             raise AttributeError('percent is  not in range')
 
+        #if random < 0.5:
         mutation_count = int(percent * len(path))
         hybrid = list(path)
         for i in xrange(0, mutation_count):
             randomIndex1 = int(random() * len(hybrid))
-            randomIndex2 = int(random() * len(hybrid))
+            #randomIndex2 = int(random() * len(hybrid))
+            if random() > 0.5:
+                randomIndex2 = int(random() * len(hybrid))
+            else:
+                randomIndex2 = (randomIndex1 + 1) % len(path)
             tmp1 = hybrid[randomIndex1]
             tmp2 = hybrid[randomIndex2]
             hybrid[randomIndex1] = tmp2
             hybrid[randomIndex2] = tmp1
 
         return hybrid
-
 
 # ==============================================================================
 #  CUSTOM CLASSES
@@ -132,22 +136,22 @@ class Darwin(object):
         self.cities_list = kwargs.get('cities_list', [])
         self.pop_number =  kwargs.get('pop_number', 10)
         self.func_gui =  kwargs.get('func_gui', None)
+        self.percent = kwargs.get('percentKeep', 0.3)
+        self.listTownSize = kwargs.get('listTownSize', 10)
+        self.listElitSize = kwargs.get('listElitSize', 2)
 
     def initialisation(self):
         """
         Create a starting pool of random path
         """
         self.paths_list = []
+        self.elit = []
         for i in xrange(self.pop_number):
-            # print("init pop_number: ", i)
             path = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            # print("path: ", path)
             self.paths_list.extend([MyPathRanked(path)])
-            # print("path_list size: ", len(self.paths_list))
 
         for i in self.paths_list:
             i.ranking()
-            # print("Path ", i)
 
     def runAlgorithm(self):
         """Prototype, please override"""
@@ -205,10 +209,7 @@ class Darwin(object):
 
     def isValid(self, rankedPath):
         for city in self.cities_list:
-            #print city
-            #print rankedPath
             if city not in rankedPath.path:
-                # print("One invalid path deleted")
                 return False
         return True
 
@@ -258,70 +259,59 @@ class DarwinForCities2(Darwin):
 
     def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
-        self.percent = kwargs.get('percentKeep', 0.3)
-        self.listTownSize = kwargs.get('listTownSize', 10)
-        self.elit = []
 
     def runAlgorithm(self):
 
-        # print '***********************************'
-        # print '**********  RUN ALGO  *************'
-        # print '***********************************'
-
-        # if self.elit:
-            # self.printPathList("Elites before double: ", self.elit)
+        self.selected_paths = []
 
         # Selection
-        selectionTable = []
-        val = 0
-        max = 0
-        for i in range(1, self.listTownSize):
-            max += i
+        totalLength = 0
+        for i in self.paths_list :
+            totalLength += i.rank
 
-        for i in range(1, self.listTownSize):
-            val += max
-            selectionTable.append(val)
-            max -= i
+        for n in range(self.listTownSize):
+            randomLen = int(random() * totalLength)
+            stopLen = 0
+            for i in self.paths_list:
+                stopLen += i.rank
+                if stopLen > randomLen:
+                    self.selected_paths.extend([MyPathRanked(i.path)])
+                    self.selected_paths[-1].ranking()
+                    break
 
-        '''for i in xrange(self.listTownSize):
+        #prev = self.selected_paths[0]
+        new_path_list = []
+        for i in range(0, len(self.selected_paths), 2):
+            curr1 = self.selected_paths[i]
+            curr2 = self.selected_paths[i+1]
+            if random() > 0.5:
+                newPath1 = Genetic.mutation(curr1.path, random())
+                newPath2 = Genetic.mutation(curr2.path, random())
+                new_path_list.extend([MyPathRanked(newPath1)])
+                new_path_list[-1].ranking()
+                new_path_list.extend([MyPathRanked(newPath2)])
+                new_path_list[-1].ranking()
+            #if(prev != None):
+            pivot = random()
+            newPath = Genetic.crossPathWithPivot(curr1.path, curr2.path, pivot)
+            newPrevPath = Genetic.crossPathWithPivot(curr2.path, curr1.path, pivot)
 
-            newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            self.paths_list.extend([MyPathRanked(newPath)])'''
+            new_path_list.extend([MyPathRanked(newPath)])
+            new_path_list[-1].ranking()
+            new_path_list.extend([MyPathRanked(newPrevPath)])
+            new_path_list[-1].ranking()
 
-        # if self.elit:
-            # self.printPathList("Elites after double: ", self.elit)
-
-        prev = None
-        for i in self.paths_list:
-            i.path = Genetic.mutation(i.path, 0.4)
-            i.ranking()
-            '''if(prev != None):
-                temp = i
-                i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.5)
-                prev.path = Genetic.crossPathWithPivot(prev.path, temp.path, 0.5)
-                i.ranking()
-                prev.ranking()
-                prev = None
-            else:
-                prev = i'''
-        # if self.elit:
-            # self.printPathList("Elites after mutation: ", self.elit)
-
-        # self.printPathList("Paths_list after genetic mutation: " + str(len(self.paths_list)), self.paths_list)
-        self.paths_list = self.getValidPathList(self.paths_list)
-        # self.printPathList("Paths_list after delete unvalid: " + str(len(self.paths_list)), self.paths_list)
+        self.selected_paths.extend(new_path_list)
+        self.selected_paths = self.getValidPathList(self.selected_paths)
         if self.elit:
-            # self.printPathList("Elites: ", self.elit)
-            self.paths_list.extend((self.elit[0], self.elit[1]))
-            # self.printPathList("List with elites: ", self.paths_list)
-        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
-        # self.printPathList("Paths_list after sort: " + str(len(self.paths_list)), self.paths_list)
-        self.paths_list = self.paths_list[:self.listTownSize]
-        # self.printPathList("Paths_list after keep numer pop: " + str(len(self.paths_list)), self.paths_list)
-        self.elit = copy.deepcopy(self.paths_list[:2])
-        # self.printPathList("New elites: ", self.elit)
+            self.selected_paths.extend((self.elit))
+        self.selected_paths = sorted(self.selected_paths, key=MyPathRanked.getRank)
+        self.selected_paths = self.selected_paths[:self.listTownSize]
+        self.elit = copy.deepcopy(self.selected_paths[:self.listElitSize])
 
-        return self.paths_list[0]
+        self.paths_list = copy.deepcopy(self.selected_paths)
+
+        return self.selected_paths[0]
 
 
 class DarwinForCities3(Darwin):
@@ -548,4 +538,5 @@ if __name__ == "__main__":
     gui = sys.argv[2]
     maxTime = sys.argv[3]
 
-    ga_solve(fileName, gui, maxTime)
+    bestlenresult, pathresult = ga_solve(fileName, gui, maxTime)
+    print bestlenresult
