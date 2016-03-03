@@ -158,7 +158,7 @@ class Darwin(object):
 
         self.initialisation()
 
-        print "start algorithm for ~" + str(self.max_time_s) + " s"
+        # print "start algorithm for ~" + str(self.max_time_s) + " s"
         startTime = time.time()
 
         logList = []
@@ -173,7 +173,7 @@ class Darwin(object):
             endTime = time.time()
             # print("paths_list len before append: ", len(self.paths_list))
             # print(self.paths_list)
-            logList.extend([self.paths_list])
+            #logList.extend([self.paths_list])
             # print("loglist count: ", len(logList[count-1]))
 
             if self.func_gui != None:
@@ -181,20 +181,20 @@ class Darwin(object):
             if (endTime - startTime > self.max_time_s):# or count > 3):
                 timeout = True
 
-        with open('log.txt', 'w') as f:
+        '''with open('log.txt', 'w') as f:
             for list_path in logList:
                 f.write('************************ ' + str(len(list_path)) + '\n')
                 count_path = 0
                 for path in list_path:
                     count_path +=1
                     f.write("Path " + str(count_path) + " / " + str(path.rank) + ": " + path.path.__repr__())
-                    f.write('\n')
+                    f.write('\n')'''
 
-        print "runs count: ", count
+        '''print "runs count: ", count
         print "algorithm finish in " + str(endTime - startTime) + " s"
         print "the best path lenght found : " + str(bestPath.getRank())
-        print bestPath.path
-        return bestPath.path
+        print bestPath.path'''
+        return bestPath.getRank(), bestPath.path
 
     def getValidPathList(self, paths_list):
         new_path_list = []
@@ -465,7 +465,7 @@ class CitiesLoader:
 #  GUI
 # ==============================================================================
 
-def go_solve(file=None, gui=True, maxtime=0):
+def ga_solve(file=None, gui=False, maxtime=0):
     import pygame
     from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
     import sys
@@ -473,7 +473,6 @@ def go_solve(file=None, gui=True, maxtime=0):
     collecting = file==None
     listCities = []
     if file != None:
-        print "TOTOTOTOTOT"
         listCities = CitiesLoader.getCitiesFromFile(file)
     screen_x = 500
     screen_y = 500
@@ -526,9 +525,10 @@ def go_solve(file=None, gui=True, maxtime=0):
         pygame.display.flip()
 
     drawRecherche(listCities)
-    d = DarwinForCities3(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
-    listCities = d.run()
+    d = DarwinForCities2(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
+    bestlen, listCities = d.run()
     drawRecherche(listCities)
+    return bestlen, listCities
 
     while True:
     	event = pygame.event.wait()
