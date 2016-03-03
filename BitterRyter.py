@@ -257,6 +257,7 @@ class DarwinForCities2(Darwin):
     def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.percent = kwargs.get('percentKeep', 0.3)
+        self.listTownSize = kwargs.get('listTownSize', 10)
         self.elit = []
 
     def runAlgorithm(self):
@@ -268,18 +269,33 @@ class DarwinForCities2(Darwin):
         # if self.elit:
             # self.printPathList("Elites before double: ", self.elit)
 
-        for i in xrange(len(self.paths_list)):
+        # Selection
+        selectionTable = []
+        val = 0
+        max = 0
+        for i in range(1, self.listTownSize):
+            max += i
+
+        for i in range(1, self.listTownSize):
+            val += max
+            selectionTable.append(val)
+            max -= i
+
+        '''for i in xrange(self.listTownSize):
+
             newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
-            self.paths_list.extend([MyPathRanked(newPath)])
+            self.paths_list.extend([MyPathRanked(newPath)])'''
 
         # if self.elit:
             # self.printPathList("Elites after double: ", self.elit)
+
+
 
         prev = None
         for i in self.paths_list:
             i.path = Genetic.mutation(i.path, 0.4)
             i.ranking()
-            '''if(prev != None):
+            if(prev != None):
                 temp = i
                 i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.5)
                 prev.path = Genetic.crossPathWithPivot(prev.path, temp.path, 0.5)
@@ -287,7 +303,7 @@ class DarwinForCities2(Darwin):
                 prev.ranking()
                 prev = None
             else:
-                prev = i'''
+                prev = i
         # if self.elit:
             # self.printPathList("Elites after mutation: ", self.elit)
 
@@ -300,7 +316,7 @@ class DarwinForCities2(Darwin):
             # self.printPathList("List with elites: ", self.paths_list)
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
         # self.printPathList("Paths_list after sort: " + str(len(self.paths_list)), self.paths_list)
-        self.paths_list = self.paths_list[:len(self.cities_list)]
+        self.paths_list = self.paths_list[:self.listTownSize]
         # self.printPathList("Paths_list after keep numer pop: " + str(len(self.paths_list)), self.paths_list)
         self.elit = copy.deepcopy(self.paths_list[:2])
         # self.printPathList("New elites: ", self.elit)
@@ -339,6 +355,58 @@ class DarwinForCities3(Darwin):
 
         return self.paths_list[0]
 
+
+class DarwinForCities4(Darwin):
+    """
+    Try 2 TODO algorithm descrition
+    """
+
+    def __init__(self, **kwargs):
+        Darwin.__init__(self, **kwargs)
+        self.percent = kwargs.get('percentKeep', 0.3)
+        self.listTownSize = kwargs.get('listTownSize', 10)
+        self.elit = []
+
+    def runAlgorithm(self):
+
+        for i in xrange(1):
+            newPath = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            self.paths_list.extend([MyPathRanked(newPath)])
+            self.paths_list[-1].ranking()
+
+        prev = None
+        new_path_list = []
+        for i in self.paths_list:
+            #print self.paths_list
+            #print 'run Algo'
+
+            #newPath2 = Genetic.createPath(len(self.cities_list), self.cities_list, True)
+            #print newPath2
+            #new_path_list.extend([MyPathRanked(newPath2)])
+            newPath = Genetic.mutation(i.path, 0.4)
+            new_path_list.extend([MyPathRanked(newPath)])
+            new_path_list[-1].ranking()
+            if(prev != None):
+                temp = i
+                i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.5)
+                prev.path = Genetic.crossPathWithPivot(prev.path, temp.path, 0.5)
+                i.ranking()
+                prev.ranking()
+                prev = None
+            else:
+                prev = i
+
+        self.paths_list = self.getValidPathList(self.paths_list)
+
+        if self.elit:
+            self.paths_list.extend((self.elit[0], self.elit[1]))
+
+        self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
+        self.paths_list = self.paths_list[:self.listTownSize]
+        self.elit = copy.deepcopy(self.paths_list[:2])
+
+
+        return self.paths_list[0]
 
 class MyPathRanked(object):
     def __init__(self, path):
@@ -431,10 +499,10 @@ class GUI:
             if event.type == KEYDOWN: break
 
 
-def go_solve(file=None, gui=True, maxtime=0):
+def ga_solve(file=None, gui=True, maxtime=0):
     listCities = CitiesLoader.getCitiesFromFile(file)
 
-    d = DarwinForCities3(cities_list=listCities, max_time_s=maxtime)
+    d = DarwinForCities2(cities_list=listCities, max_time_s=maxtime)
 
 
     listCities = d.run()
@@ -455,4 +523,4 @@ if __name__ == "__main__":
     gui = sys.argv[2]
     maxTime = sys.argv[3]
 
-    go_solve(fileName, gui, maxTime)
+    ga_solve(fileName, gui, maxTime)
