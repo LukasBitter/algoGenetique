@@ -29,9 +29,9 @@ modules = (
 # <datafile> est le fichier contenant les données du problème et
 # <maxtime> le temps (en secondes) imparti pour la résolution
 tests = (
-    #('data/pb005.txt',1),
+    ('data/pb005.txt',1),
     ('data/pb010.txt',5),
-    ('data/pb010.txt',10),
+    #('data/pb010.txt',10),
     #('data/pb050.txt',30),
     #('data/pb050.txt',60),
     #('data/pb100.txt',20),
@@ -48,10 +48,10 @@ outfile = sys.stdout
 #outfile = open('results.csv', 'w')
 
 # affichage à la console d'informations d'avancement?
-verbose = True
+verbose = False
 
 # est-ce qu'on veut un affichage graphique?
-gui = True
+gui = False
 
 # PROGRAMME
 # =========
@@ -116,7 +116,6 @@ if __name__ == '__main__':
         outfile.write("%s;" % m)
 
     outfile.write('\n')
-    print "outfile"
 
     # Cette partie effectue les tests proprement dits
     # et rapporte les résultats dans outfile
