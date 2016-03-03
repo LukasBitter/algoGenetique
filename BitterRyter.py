@@ -5,7 +5,6 @@ import copy
 import cProfile
 from random import random
 
-
 class Genetic:
     """
     This class regroup functions that simulate the genetic comportement for
@@ -132,6 +131,7 @@ class Darwin(object):
         self.max_time_s = float(kwargs.get('max_time_s', 10))
         self.cities_list = kwargs.get('cities_list', [])
         self.pop_number =  kwargs.get('pop_number', 10)
+        self.func_gui =  kwargs.get('func_gui', None)
 
     def initialisation(self):
         """
@@ -176,6 +176,8 @@ class Darwin(object):
             logList.extend([self.paths_list])
             # print("loglist count: ", len(logList[count-1]))
 
+            if self.func_gui != None:
+                self.func_gui(bestPath.path)
             if (endTime - startTime > self.max_time_s):# or count > 3):
                 timeout = True
 
@@ -289,13 +291,11 @@ class DarwinForCities2(Darwin):
         # if self.elit:
             # self.printPathList("Elites after double: ", self.elit)
 
-
-
         prev = None
         for i in self.paths_list:
             i.path = Genetic.mutation(i.path, 0.4)
             i.ranking()
-            if(prev != None):
+            '''if(prev != None):
                 temp = i
                 i.path = Genetic.crossPathWithPivot(i.path, prev.path, 0.5)
                 prev.path = Genetic.crossPathWithPivot(prev.path, temp.path, 0.5)
@@ -303,7 +303,7 @@ class DarwinForCities2(Darwin):
                 prev.ranking()
                 prev = None
             else:
-                prev = i
+                prev = i'''
         # if self.elit:
             # self.printPathList("Elites after mutation: ", self.elit)
 
@@ -332,7 +332,8 @@ class DarwinForCities3(Darwin):
     def __init__(self, **kwargs):
         Darwin.__init__(self, **kwargs)
         self.percent = kwargs.get('percentKeep', 0.3)
-        self.listTownSize = kwargs.get('listTownSize', 10)
+        self.listTownSize = kwargs.get('listTownSize', 20)
+        self.listElitSize = kwargs.get('listElitSize', 2)
         self.elit = []
 
     def runAlgorithm(self):
@@ -348,10 +349,10 @@ class DarwinForCities3(Darwin):
 
         self.paths_list = self.getValidPathList(self.paths_list)
         if self.elit:
-            self.paths_list.extend((self.elit[0], self.elit[1]))
+            self.paths_list.extend((self.elit))
         self.paths_list = sorted(self.paths_list, key=MyPathRanked.getRank)
         self.paths_list = self.paths_list[:self.listTownSize]
-        self.elit = copy.deepcopy(self.paths_list[:2])
+        self.elit = copy.deepcopy(self.paths_list[:self.listElitSize])
 
         return self.paths_list[0]
 
@@ -464,50 +465,75 @@ class CitiesLoader:
 #  GUI
 # ==============================================================================
 
-import pygame
-from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
-import sys
+def go_solve(file=None, gui=True, maxtime=0):
+    import pygame
+    from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
+    import sys
 
+    collecting = file==None
+    listCities = []
+    if file != None:
+        print "TOTOTOTOTOT"
+        listCities = CitiesLoader.getCitiesFromFile(file)
+    screen_x = 500
+    screen_y = 500
 
-class GUI:
-    @staticmethod
-    def showGui(cities):
-        screen_x = 500
-        screen_y = 500
+    city_color = [10,10,200] # blue
+    city_radius = 3
 
-        city_color = [10, 10, 200]  # blue
-        city_radius = 3
+    font_color = [255,255,255] # white
 
-        font_color = [255, 255, 255]  # white
+    pygame.init()
+    window = pygame.display.set_mode((screen_x, screen_y))
+    pygame.display.set_caption('Exemple')
+    screen = pygame.display.get_surface()
+    font = pygame.font.Font(None,30)
 
-        pygame.init()
-        window = pygame.display.set_mode((screen_x, screen_y))
-        pygame.display.set_caption('Exemple')
-        screen = pygame.display.get_surface()
-        font = pygame.font.Font(None, 30)
-
+    def drawEdition(positions):
+        positions = [x[1:] for x in positions]
         screen.fill(0)
-        citiesCoor = [x[1:] for x in cities]
-        pygame.draw.lines(screen, city_color, True, citiesCoor)
-        text = font.render("Un chemin, SURREMENT le meilleur!", True, font_color)
+        for pos in positions:
+			pygame.draw.circle(screen,city_color,pos,city_radius)
+        text = font.render("Nombre: %i" % len(positions), True, font_color)
         textRect = text.get_rect()
         screen.blit(text, textRect)
         pygame.display.flip()
 
-        while True:
-            event = pygame.event.wait()
-            if event.type == KEYDOWN: break
+    drawEdition(listCities)
 
+    if collecting:
+        counting = 0
+        while collecting:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    sys.exit(0)
+                elif event.type == KEYDOWN and event.key == K_RETURN:
+                    collecting = False
+                elif event.type == MOUSEBUTTONDOWN:
+                    counting = counting+1
+                    pos = pygame.mouse.get_pos()
+                    print (str(counting), pos[0], pos[1])
+                    listCities.append((str(counting), pos[0], pos[1]))
+                    drawEdition(listCities)
 
-def ga_solve(file=None, gui=True, maxtime=0):
-    listCities = CitiesLoader.getCitiesFromFile(file)
+    def drawRecherche(positions):
+        positions = [x[1:] for x in positions]
+        screen.fill(0)
+        pygame.draw.lines(screen,city_color,True,positions)
+        text = font.render("Un chemin, pas le meilleur!", True, font_color)
+        textRect = text.get_rect()
+        screen.blit(text, textRect)
+        pygame.display.flip()
 
-    d = DarwinForCities2(cities_list=listCities, max_time_s=maxtime)
-
-
+    drawRecherche(listCities)
+    d = DarwinForCities3(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
     listCities = d.run()
+    drawRecherche(listCities)
 
-    GUI.showGui(listCities)
+    while True:
+    	event = pygame.event.wait()
+    	if event.type == KEYDOWN: break
+
 
 
 # ==============================================================================
@@ -516,10 +542,9 @@ def ga_solve(file=None, gui=True, maxtime=0):
 
 if __name__ == "__main__":
     import sys
-
-    # prog = open(sys.argv[1]).read()
-    # print(prog)
     fileName = sys.argv[1]
+    if fileName == 'None':
+        fileName = None
     gui = sys.argv[2]
     maxTime = sys.argv[3]
 

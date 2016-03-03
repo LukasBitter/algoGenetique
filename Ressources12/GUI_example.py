@@ -10,15 +10,15 @@ city_radius = 3
 
 font_color = [255,255,255] # white
 
-pygame.init() 
-window = pygame.display.set_mode((screen_x, screen_y)) 
-pygame.display.set_caption('Exemple') 
-screen = pygame.display.get_surface() 
+pygame.init()
+window = pygame.display.set_mode((screen_x, screen_y))
+pygame.display.set_caption('Exemple')
+screen = pygame.display.get_surface()
 font = pygame.font.Font(None,30)
 
 def draw(positions):
 		screen.fill(0)
-		for pos in positions: 
+		for pos in positions:
 			pygame.draw.circle(screen,city_color,pos,city_radius)
 		text = font.render("Nombre: %i" % len(positions), True, font_color)
 		textRect = text.get_rect()
@@ -39,7 +39,7 @@ while collecting:
 		elif event.type == MOUSEBUTTONDOWN:
 			cities.append(pygame.mouse.get_pos())
 			draw(cities)
-			
+
 screen.fill(0)
 pygame.draw.lines(screen,city_color,True,cities)
 text = font.render("Un chemin, pas le meilleur!", True, font_color)
