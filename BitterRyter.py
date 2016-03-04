@@ -4,6 +4,7 @@
 import copy
 from random import random
 
+
 class Genetic:
     '''
     This class regroup functions that simulate the genetic comportement for
@@ -97,7 +98,6 @@ class Genetic:
         path[i] = path[j]
         path[j] = temp
 
-
     @staticmethod
     def dist(c1, c2):
         '''
@@ -122,14 +122,14 @@ class Darwin(object):
     '''
 
     def __init__(self, **kwargs):
-        self.max_time_s = float(kwargs.get('max_time_s', 10))
+        self.max_time_s = float(kwargs.get('max_time_s', 0))
         self.cities_list = kwargs.get('cities_list', [])
-        self.pop_number =  kwargs.get('pop_number', 10)
-        self.func_gui =  kwargs.get('func_gui')
-        self.listElitSize = kwargs.get('listElitSize', self.pop_number/10)
+        self.pop_number = kwargs.get('pop_number', 10)
+        self.func_gui = kwargs.get('func_gui', False)
+        self.listElitSize = kwargs.get('listElitSize', self.pop_number / 10)
         l = len(self.cities_list)
-        self.optimal_iteration = int(log(l)*l)+1
-        self.stagnation_counter_max = 30
+        self.optimal_iteration = int(log(l) * l) + 1
+        self.stagnation_counter_max = 50
 
     def initialisation(self):
         '''
@@ -176,18 +176,19 @@ class Darwin(object):
             if self.func_gui != None:
                 self.func_gui(bestPath.path)
 
-            #stop on time out if set
+            # stop on time out if set
             if (self.max_time_s > 0 and endTime - startTime > self.max_time_s - 0.1):
                 print "QUIT by timeout"
                 timeout = True
-            #stop on stagnation
+            # stop on stagnation
             cpt_iteration += 1
-            if cpt_iteration > self.optimal_iteration and cpt_stagnation > self.stagnation_counter_max:
-                print "QUIT by stagnation after n*ln(n)"
-                timeout = True
-            if cpt_iteration < self.optimal_iteration and cpt_stagnation > (self.stagnation_counter_max * 2):
-                print "QUIT by stagnation before n*ln(n)"
-                timeout = True
+            if self.max_time_s == 0:
+                if cpt_iteration > self.optimal_iteration and cpt_stagnation > self.stagnation_counter_max:
+                    print "QUIT by stagnation after n*ln(n)"
+                    timeout = True
+                if cpt_iteration < self.optimal_iteration and cpt_stagnation > (self.stagnation_counter_max * 2):
+                    print "QUIT by stagnation before n*ln(n)"
+                    timeout = True
 
         return bestPath.getRank(), bestPath.path
 
@@ -198,6 +199,9 @@ class Darwin(object):
         - If path are equals, return false
         - If new is greather than old, return false
         - if new is smaller than old return true
+        :param new: new path
+        :param old: old path
+        :return: True/False
         '''
         delta = 0.001
         if abs(new - old) < delta:
@@ -243,14 +247,14 @@ class DarwinForCities(Darwin):
 
         # Selection
         totalLength = 0
-        for i in range(self.pop_number) :
+        for i in range(self.pop_number):
             totalLength += i
 
         for n in range(self.pop_number):
             randomLen = int(random() * totalLength)
             stopLen = 0
             for i in range(len(self.paths_list)):
-                stopLen += len(self.paths_list)-i
+                stopLen += len(self.paths_list) - i
                 if stopLen > randomLen:
                     self.selected_paths.extend([MyPathRanked(self.paths_list[i].path)])
                     self.selected_paths[-1].ranking()
@@ -260,7 +264,7 @@ class DarwinForCities(Darwin):
         new_path_list = []
         for i in range(0, len(self.selected_paths), 2):
             curr1 = self.selected_paths[i]
-            curr2 = self.selected_paths[i+1]
+            curr2 = self.selected_paths[i + 1]
             newPath1 = Genetic.mutation(curr1.path, random())
             newPath2 = Genetic.mutation(curr2.path, random())
             new_path_list.extend([MyPathRanked(newPath1)])
@@ -280,14 +284,14 @@ class DarwinForCities(Darwin):
 
         # 2opt
         for p in self.selected_paths:
-            for i in range(len(p)-3):
-                for j in range(i+2,len(p)-1):
-                    d_ab = Genetic.dist(p.path[i], p.path[i+1])
-                    d_cd = Genetic.dist(p.path[j], p.path[j+1])
+            for i in range(len(p) - 3):
+                for j in range(i + 2, len(p) - 1):
+                    d_ab = Genetic.dist(p.path[i], p.path[i + 1])
+                    d_cd = Genetic.dist(p.path[j], p.path[j + 1])
                     d_ac = Genetic.dist(p.path[i], p.path[j])
-                    d_bd = Genetic.dist(p.path[i+1], p.path[j+1])
+                    d_bd = Genetic.dist(p.path[i + 1], p.path[j + 1])
                     if (d_ab + d_cd > d_ac + d_bd):
-                        Genetic.swap(p.path,i+1,j)
+                        Genetic.swap(p.path, i + 1, j)
                         p.ranking()
 
         if self.elit:
@@ -345,6 +349,7 @@ class CitiesLoader:
     '''
     Class used t load a cities file
     '''
+
     @staticmethod
     def getCitiesFromFile(fileName):
         '''
@@ -378,7 +383,7 @@ def ga_solve(file=None, gui=False, maxtime=0):
     from pygame.locals import KEYDOWN, QUIT, MOUSEBUTTONDOWN, K_RETURN, K_ESCAPE
     import sys
 
-    collecting = file==None
+    collecting = file == None
     listCities = []
     if file != None:
         listCities = CitiesLoader.getCitiesFromFile(file)
@@ -387,22 +392,22 @@ def ga_solve(file=None, gui=False, maxtime=0):
         screen_x = 500
         screen_y = 500
 
-        city_color = [10,10,200] # blue
+        city_color = [10, 10, 200]  # blue
         city_radius = 3
 
-        font_color = [255,255,255] # white
+        font_color = [255, 255, 255]  # white
 
         pygame.init()
         window = pygame.display.set_mode((screen_x, screen_y))
         pygame.display.set_caption('Exemple')
         screen = pygame.display.get_surface()
-        font = pygame.font.Font(None,30)
+        font = pygame.font.Font(None, 30)
 
         def drawEdition(positions):
             positions = [x[1:] for x in positions]
             screen.fill(0)
             for pos in positions:
-    			pygame.draw.circle(screen,city_color,pos,city_radius)
+                pygame.draw.circle(screen, city_color, pos, city_radius)
             text = font.render("Nombre: %i" % len(positions), True, font_color)
             textRect = text.get_rect()
             screen.blit(text, textRect)
@@ -419,7 +424,7 @@ def ga_solve(file=None, gui=False, maxtime=0):
                     elif event.type == KEYDOWN and event.key == K_RETURN:
                         collecting = False
                     elif event.type == MOUSEBUTTONDOWN:
-                        counting = counting+1
+                        counting = counting + 1
                         pos = pygame.mouse.get_pos()
                         print (str(counting), pos[0], pos[1])
                         listCities.append((str(counting), pos[0], pos[1]))
@@ -428,7 +433,7 @@ def ga_solve(file=None, gui=False, maxtime=0):
         def drawRecherche(positions):
             positions = [x[1:] for x in positions]
             screen.fill(0)
-            pygame.draw.lines(screen,city_color,True,positions)
+            pygame.draw.lines(screen, city_color, True, positions)
             text = font.render("Un chemin, pas le meilleur!", True, font_color)
             textRect = text.get_rect()
             screen.blit(text, textRect)
@@ -443,18 +448,17 @@ def ga_solve(file=None, gui=False, maxtime=0):
             return bestlen, [x[0] for x in listCities]
         else:
             pygame.display.quit()
-            drawRecherche = lambda x:None
+            drawRecherche = lambda x: None
 
             d = DarwinForCities(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
             bestlen, listCities = d.run()
             return bestlen, [x[0] for x in listCities]
     else:
-        drawRecherche = lambda x:None
+        drawRecherche = lambda x: None
 
         d = DarwinForCities(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
         bestlen, listCities = d.run()
         return bestlen, [x[0] for x in listCities]
-
 
 
 # ==============================================================================
@@ -465,9 +469,9 @@ if __name__ == "__main__":
     import sys
     import getopt
 
-    fileName=None
-    gui=True
-    max_time=0
+    fileName = None
+    gui = True
+    max_time = 0
 
     options_list = ["nogui", "maxtime="]
     opt, arg = getopt.getopt(sys.argv[1:], None, options_list)
@@ -477,8 +481,8 @@ if __name__ == "__main__":
 
     for o, a in opt:
         if o == "--nogui":
-            gui=False
-        elif o =="--maxtime":
+            gui = False
+        elif o == "--maxtime":
             max_time = a
 
     bestlenresult, pathresult = ga_solve(fileName, gui, max_time)
