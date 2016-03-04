@@ -403,7 +403,7 @@ def ga_solve(file=None, gui=False, maxtime=0):
     bestlen, listCities = d.run()
     if gui:
         drawRecherche(listCities)
-    return bestlen, listCities
+    return bestlen, [x[0] for x in listCities]
 
     while True:
     	event = pygame.event.wait()
