@@ -97,11 +97,22 @@ class Genetic:
         path[i] = path[j]
         path[j] = temp
 
+
+    @staticmethod
+    def dist(c1, c2):
+        '''
+        :param c1: city #1
+        :param c2: city #2
+        :return: distance between c1 and c2
+        '''
+        return sqrt((c1[1] - c2[1]) ** 2 + (c1[2] - c2[2]) ** 2)
+
 # ==============================================================================
 #  CUSTOM CLASSES
 # ==============================================================================
 
 from math import sqrt
+from math import log
 import time
 
 
@@ -116,6 +127,9 @@ class Darwin(object):
         self.pop_number =  kwargs.get('pop_number', 10)
         self.func_gui =  kwargs.get('func_gui')
         self.listElitSize = kwargs.get('listElitSize', self.pop_number/10)
+        l = len(self.cities_list)
+        self.optimal_iteration = int(log(l)*l)+1
+        self.stagnation_counter_max = 30
 
     def initialisation(self):
         '''
@@ -140,6 +154,9 @@ class Darwin(object):
 
     def run(self):
         timeout = False
+        ln_log_n_reach = False
+        cpt_iteration = 0
+        cpt_stagnation = 0
 
         self.initialisation()
         startTime = time.time()
@@ -147,24 +164,46 @@ class Darwin(object):
 
         while not timeout:
             newBestPath = self.runAlgorithm()
-            bestPath = (bestPath, newBestPath)[newBestPath.getRank() < bestPath.getRank()]
+
+            if Darwin.isNewBetterThanOld(newBestPath.getRank(), bestPath.getRank()):
+                bestPath = newBestPath
+                cpt_stagnation = 0
+            else:
+                cpt_stagnation += 1
+
             endTime = time.time()
 
             if self.func_gui != None:
                 self.func_gui(bestPath.path)
-            if (endTime - startTime > self.max_time_s):
+
+            #stop on time out if set
+            if (self.max_time_s > 0 and endTime - startTime > self.max_time_s - 0.1):
+                print "QUIT by timeout"
+                timeout = True
+            #stop on stagnation
+            cpt_iteration += 1
+            if cpt_iteration > self.optimal_iteration and cpt_stagnation > self.stagnation_counter_max:
+                print "QUIT by stagnation after n*ln(n)"
+                timeout = True
+            if cpt_iteration < self.optimal_iteration and cpt_stagnation > (self.stagnation_counter_max * 2):
+                print "QUIT by stagnation before n*ln(n)"
                 timeout = True
 
         return bestPath.getRank(), bestPath.path
 
-
-    def dist(self,c1, c2):
+    @staticmethod
+    def isNewBetterThanOld(new, old):
         '''
-        :param c1: city #1
-        :param c2: city #2
-        :return: distance between c1 and c2
+        Compare the path:
+        - If path are equals, return false
+        - If new is greather than old, return false
+        - if new is smaller than old return true
         '''
-        return sqrt((c1[1] - c2[1]) ** 2 + (c1[2] - c2[2]) ** 2)
+        delta = 0.001
+        if abs(new - old) < delta:
+            return False
+        else:
+            return new < old
 
     def getValidPathList(self, paths_list):
         '''
@@ -200,7 +239,6 @@ class DarwinForCities(Darwin):
         This function implements the genetic algorithm
         :return: the best path encountered during genetic modification
         '''
-
         self.selected_paths = []
 
         # Selection
@@ -244,10 +282,10 @@ class DarwinForCities(Darwin):
         for p in self.selected_paths:
             for i in range(len(p)-3):
                 for j in range(i+2,len(p)-1):
-                    d_ab = self.dist(p.path[i], p.path[i+1])
-                    d_cd = self.dist(p.path[j], p.path[j+1])
-                    d_ac = self.dist(p.path[i], p.path[j])
-                    d_bd = self.dist(p.path[i+1], p.path[j+1])
+                    d_ab = Genetic.dist(p.path[i], p.path[i+1])
+                    d_cd = Genetic.dist(p.path[j], p.path[j+1])
+                    d_ac = Genetic.dist(p.path[i], p.path[j])
+                    d_bd = Genetic.dist(p.path[i+1], p.path[j+1])
                     if (d_ab + d_cd > d_ac + d_bd):
                         Genetic.swap(p.path,i+1,j)
                         p.ranking()
@@ -290,12 +328,12 @@ class MyPathRanked(object):
 
         for town in self.path:
             if previous_town != None:
-                dist += sqrt((town[1] - previous_town[1]) ** 2 + (town[2] - previous_town[2]) ** 2)
+                dist += Genetic.dist(town, previous_town)
             previous_town = town
 
         first_town = self.path[0]
         last_town = self.path[len(self.path) - 1]
-        dist += sqrt((last_town[1] - first_town[1]) ** 2 + (last_town[2] - first_town[2]) ** 2)
+        dist += Genetic.dist(last_town, first_town)
         self.rank = dist
 
 
@@ -344,70 +382,78 @@ def ga_solve(file=None, gui=False, maxtime=0):
     listCities = []
     if file != None:
         listCities = CitiesLoader.getCitiesFromFile(file)
-    screen_x = 500
-    screen_y = 500
 
-    city_color = [10,10,200] # blue
-    city_radius = 3
+    if gui or file == None:
+        screen_x = 500
+        screen_y = 500
 
-    font_color = [255,255,255] # white
+        city_color = [10,10,200] # blue
+        city_radius = 3
 
-    pygame.init()
-    window = pygame.display.set_mode((screen_x, screen_y))
-    pygame.display.set_caption('Exemple')
-    screen = pygame.display.get_surface()
-    font = pygame.font.Font(None,30)
+        font_color = [255,255,255] # white
 
-    def drawEdition(positions):
-        positions = [x[1:] for x in positions]
-        screen.fill(0)
-        for pos in positions:
-			pygame.draw.circle(screen,city_color,pos,city_radius)
-        text = font.render("Nombre: %i" % len(positions), True, font_color)
-        textRect = text.get_rect()
-        screen.blit(text, textRect)
-        pygame.display.flip()
+        pygame.init()
+        window = pygame.display.set_mode((screen_x, screen_y))
+        pygame.display.set_caption('Exemple')
+        screen = pygame.display.get_surface()
+        font = pygame.font.Font(None,30)
 
-    drawEdition(listCities)
+        def drawEdition(positions):
+            positions = [x[1:] for x in positions]
+            screen.fill(0)
+            for pos in positions:
+    			pygame.draw.circle(screen,city_color,pos,city_radius)
+            text = font.render("Nombre: %i" % len(positions), True, font_color)
+            textRect = text.get_rect()
+            screen.blit(text, textRect)
+            pygame.display.flip()
 
-    if collecting:
-        counting = 0
-        while collecting:
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    sys.exit(0)
-                elif event.type == KEYDOWN and event.key == K_RETURN:
-                    collecting = False
-                elif event.type == MOUSEBUTTONDOWN:
-                    counting = counting+1
-                    pos = pygame.mouse.get_pos()
-                    print (str(counting), pos[0], pos[1])
-                    listCities.append((str(counting), pos[0], pos[1]))
-                    drawEdition(listCities)
+        drawEdition(listCities)
 
-    def drawRecherche(positions):
-        positions = [x[1:] for x in positions]
-        screen.fill(0)
-        pygame.draw.lines(screen,city_color,True,positions)
-        text = font.render("Un chemin, pas le meilleur!", True, font_color)
-        textRect = text.get_rect()
-        screen.blit(text, textRect)
-        pygame.display.flip()
+        if collecting:
+            counting = 0
+            while collecting:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        sys.exit(0)
+                    elif event.type == KEYDOWN and event.key == K_RETURN:
+                        collecting = False
+                    elif event.type == MOUSEBUTTONDOWN:
+                        counting = counting+1
+                        pos = pygame.mouse.get_pos()
+                        print (str(counting), pos[0], pos[1])
+                        listCities.append((str(counting), pos[0], pos[1]))
+                        drawEdition(listCities)
 
-    if gui:
-        drawRecherche(listCities)
+        def drawRecherche(positions):
+            positions = [x[1:] for x in positions]
+            screen.fill(0)
+            pygame.draw.lines(screen,city_color,True,positions)
+            text = font.render("Un chemin, pas le meilleur!", True, font_color)
+            textRect = text.get_rect()
+            screen.blit(text, textRect)
+            pygame.display.flip()
+
+        if gui:
+            drawRecherche(listCities)
+            d = DarwinForCities(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
+            bestlen, listCities = d.run()
+            drawRecherche(listCities)
+
+            return bestlen, [x[0] for x in listCities]
+        else:
+            pygame.display.quit()
+            drawRecherche = lambda x:None
+
+            d = DarwinForCities(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
+            bestlen, listCities = d.run()
+            return bestlen, [x[0] for x in listCities]
     else:
-        drawRecherche = None
+        drawRecherche = lambda x:None
 
-    d = DarwinForCities(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
-    bestlen, listCities = d.run()
-    if gui:
-        drawRecherche(listCities)
-    return bestlen, [x[0] for x in listCities]
-
-    while True:
-    	event = pygame.event.wait()
-    	if event.type == KEYDOWN: break
+        d = DarwinForCities(cities_list=listCities, max_time_s=maxtime, func_gui=drawRecherche)
+        bestlen, listCities = d.run()
+        return bestlen, [x[0] for x in listCities]
 
 
 
@@ -417,11 +463,23 @@ def ga_solve(file=None, gui=False, maxtime=0):
 
 if __name__ == "__main__":
     import sys
-    fileName = sys.argv[1]
-    if fileName == 'None':
-        fileName = None
-    gui = sys.argv[2]
-    maxTime = sys.argv[3]
+    import getopt
 
-    bestlenresult, pathresult = ga_solve(fileName, gui, maxTime)
+    fileName=None
+    gui=True
+    max_time=0
+
+    options_list = ["nogui", "maxtime="]
+    opt, arg = getopt.getopt(sys.argv[1:], None, options_list)
+
+    if len(arg) == 1:
+        fileName = arg[0]
+
+    for o, a in opt:
+        if o == "--nogui":
+            gui=False
+        elif o =="--maxtime":
+            max_time = a
+
+    bestlenresult, pathresult = ga_solve(fileName, gui, max_time)
     print bestlenresult
