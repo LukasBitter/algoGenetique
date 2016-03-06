@@ -178,16 +178,19 @@ class Darwin(object):
 
             # stop on time out if set
             if (self.max_time_s > 0 and endTime - startTime > self.max_time_s - 0.1):
-                print "QUIT by timeout"
+                if verbose:
+                    print "QUIT by timeout"
                 timeout = True
             # stop on stagnation
             cpt_iteration += 1
             if self.max_time_s <= 0:
                 if cpt_iteration > self.optimal_iteration and cpt_stagnation > self.stagnation_counter_max:
-                    print "QUIT by stagnation after n*ln(n)"
+                    if verbose:
+                        print "QUIT by stagnation after n*ln(n)"
                     timeout = True
                 if cpt_iteration < self.optimal_iteration and cpt_stagnation > (self.stagnation_counter_max * 2):
-                    print "QUIT by stagnation before n*ln(n)"
+                    if verbose:
+                        print "QUIT by stagnation before n*ln(n)"
                     timeout = True
 
         return bestPath.getRank(), bestPath.path
