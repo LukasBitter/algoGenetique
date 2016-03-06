@@ -182,7 +182,7 @@ class Darwin(object):
                 timeout = True
             # stop on stagnation
             cpt_iteration += 1
-            if self.max_time_s == 0:
+            if self.max_time_s <= 0:
                 if cpt_iteration > self.optimal_iteration and cpt_stagnation > self.stagnation_counter_max:
                     print "QUIT by stagnation after n*ln(n)"
                     timeout = True
@@ -465,22 +465,31 @@ def ga_solve(file=None, gui=False, maxtime=0):
 #  MAIN
 # ==============================================================================
 
+verbose = False
 if __name__ == "__main__":
     import sys
     import getopt
+
+    def show_help():
+        print "USAGE : BitterRyter.py [--nogui] [--maxtime=] file"
+        exit()
 
     fileName = None
     gui = True
     max_time = 0
 
     options_list = ["nogui", "maxtime="]
-    opt, arg = getopt.getopt(sys.argv[1:], None, options_list)
+    opt, arg = getopt.getopt(sys.argv[1:], "hv", options_list)
 
     if len(arg) == 1:
         fileName = arg[0]
 
     for o, a in opt:
-        if o == "--nogui":
+        if o == "-h":
+            show_help()
+        elif o == "-v":
+            verbose = True
+        elif o == "--nogui":
             gui = False
         elif o == "--maxtime":
             max_time = a
